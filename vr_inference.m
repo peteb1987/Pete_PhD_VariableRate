@@ -1,9 +1,19 @@
-function [ part_sets ] = vr_inference( params, times, observs )
+function [ part_sets ] = vr_inference( flags, params, times, observ )
 %VR_INFERENCE Run variable rate particle filter and smoother algorithms
 
 % params is a structure with all the model and algorithm parameters
 % times is a vector specifying the time grid
-% observs is a vector of observations
+% observ is a vector/matrix of observations, first index is time
+
+% The first index in any particle array is the particle index.
+
+% Offset time so first observation occurs at t=0
+times = times - times(1);
+
+% Set local variables for commonly-used parameters
+ds = params.state_dim;      % State dimensionality
+do = params.obs_dim;        % Observation dimensionality
+Np = params.Np;             % Number of particles (this is overwritten in each iteration of the loop)
 
 % Create an array to store particle sets for each time frame
 part_sets = cell(params.T, 1);
@@ -11,149 +21,77 @@ part_sets = cell(params.T, 1);
 % Count the obervations
 K = numel(times);
 T = times(K);
-assert(numel(observs)==K);
+assert(numel(observ)==K);
 
+% Initialise the particle set
+last_pts_weights = log(ones(Np, 1)/Np);             % Particle weights
+last_pts_Ns = ones(Np, 1);                         % Number of states per particle
+last_pts_tau = zeros(Np, 1);                        % Particle jump times
+last_pts_x = zeros(Np, 1, ds);                      % Particle states
+last_pts_mu = zeros(Np, 1, ds);                     % Particle means (for rb case)
+last_pts_sigma = zeros(Np, 1, ds, ds);              % Particle covariances (for rb case)
+last_pts_intx = zeros(Np, K, ds);                   % States interpolated at observation times
+last_pts_intmu = zeros(Np, K, ds);                  % Means interpolated at observation times (for rb case)
+last_pts_intsigma = zeros(Np, K, ds, ds);           % Covariances interpolated at observation times (for rb case)
 
+% Initialise first points - PUT THIS AWAY IN A FUNCTION - ITS NOT GENERAL
+x_init = [observ(1), zeros(1,ds-do)];                      % Initialise value as first observation padded with zeros (i.e. partial linear observation)
+last_pts_x(:,1,:) = repmat(x_init, Np, 1);
+last_pts_mu(:,1,:) = repmat(x_init, Np, 1);
+last_pts_sigma(:,1,:,:) = permute(repmat([params.x_start_sigma, 0; 0, params.xdot_start_var], [1, 1, Np]), [3,1,2]);
 
 % Loop through observations
 for k = 1:K
     
+    % Create particle arrays
+    pts_Ns = last_pts_Ns;
+    pts_tau = last_pts_tau;
+    pts_x = last_pts_x;
+    pts_mu = last_pts_mu;
+    pts_sigma = last_pts_sigma;
+    pts_intx = last_pts_intx;
+    pts_intmu = last_pts_intmu;
+    pts_intsigma = last_pts_intsigma;
     
+    % Count the particles
+    Np = size(pts_tau, 1);
     
-end
-
-
-
-
-
-
-
-
-
-for tind=2:NumObservations
-    
-    tprev = observations(tind-1,1);
-    t = observations(tind,1);
-
-    NumParticles = numel(particles);
-    NumParticlesNextGen = 0;
-    NextGenParticles = particle.empty(1,0);
-    wsum = 0;
-    jumpingweight = 0;
-    numjump    = 0;
-    numnonjump = 0;
-    Nis = [];
-    
-    for i = 1:NumParticles
-    
-        p = particles(i);
+    % Resample/Jump proposal loop: Loop through particles
+    for ii = 1:Np
         
-        N0 = 0;
-        N1 = 0;
+        % Calculate number of children of this particle
+        Ni = max(1, floor(Np*last_pts_weights(ii)));
         
-        Ni = max(1, floor(N*p.w(tind-1)));
-         
-        % if Ni==1 then only probabilistically propagate this particle
-        if(Ni==1 && rand(1)<1-N*p.w(tind-1)), Ni=0; end
-        
-        Nis(i) = Ni;
-        
-        if(Ni>0) %if zero then don't sample this particle
+        % Loop through children
+        for jj = 1:Ni
             
-            % For this particle, N0 is the number of offspring that do not
-            % jump and N1 is the number of offspring that do
+            % Sample next jump time to see if one has happened since t-1
             
-            newparticles = particle.empty(1,0);
-
-            for j=1:Ni
-                taunew = p.samplenewtau(tprev);
-                hasjumped = taunew < t;
-                if(max(hasjumped) > 0)
-                    % In the (unlikely) event that both jump we approximate
-                    % by saying that both jumps occur at the first jump
-                    % time.  This is an approximation and could be improved
-                    % (but probably doesn't matter much).
-                    jumptime = min(taunew);
-                    q = p.AddState(jumptime, hasjumped);
-                    N1 = N1 + 1;
-                    newparticles(N1) = q;  % Copy the particle to this group
-                else
-                    N0 = N0 + 1;
-                end
-            end
+            %%% CONTINUE FROM HERE
             
-            numjump = numjump+N1;
-            numnonjump = numnonjump+N0;
-
-            Nitilde = N1 + 1;
-
-            for j=1:N1
-                newparticles(j).w(tind-1) = p.w(tind-1) / Nitilde;
-            end
-
-            p.w(tind-1) = N0*p.w(tind-1) / Ni;
-            newparticles(Nitilde) = p;
-
-            for j=1:Nitilde
-                %Nwprev(j) = newparticles(j).w(tind-1);
-                
-                
-                % Use the following line with particleA
-                %[obsprob, newparticles(j)] = newparticles(j).observationprobability(observations(1:tind,:));
-                
-                % Use the following line with particle
-                [obsprob, newparticles(j)] = newparticles(j).addobservation(observations(tind,:));
-                
-                newparticles(j).w(tind) = newparticles(j).w(tind-1)*obsprob;
-                %Nw(j) = newparticles(j).w(tind);
-                wsum = wsum + newparticles(j).w(tind);
-                if(j<=N1)
-                    jumpingweight = jumpingweight+newparticles(j).w(tind);
-                end
-            end
+            next_tau = sample_next_state(flags, params, pts_tau(ii, pts_Ns(ii)));
             
-            % add these particles to the total set
-            for j=1:Nitilde
-                NextGenParticles(NumParticlesNextGen+j) = newparticles(j);
-            end
-            NumParticlesNextGen = NumParticlesNextGen + Nitilde;
+            
+            % If a jump has occured, add it to the state and update weight
+            
         end
+            
+        % Update weight for non-jumping particles
         
     end
     
-    % Normalize weights
-    for i=1:NumParticlesNextGen
-        NextGenParticles(i).w(tind) = NextGenParticles(i).w(tind)/wsum;
+    % Weighting loop
+    for ii = 1:Np
+        
+        % Calculate predictive likelihood
+        
+        % Update weights
+        
     end
     
-    particles = NextGenParticles;
-    
-   
-    % Predict ahead
-    % predict slightly behind next observation to prevent look-ahead using next
-    % observation
-    
-    if(tind<NumObservations), tpredict = observations(tind+1, 1) - 0.00001;
-    else tpredict = 2*observations(tind,1) - observations(tind-1,1);
-    end
-    
-    %tpredict = observations(tind,1) + 2;
-    %tpredict = t;
-    
-    %tind-1 because want predict to start in first row
-    predict(tind-1,1) = t;
-    predict(tind-1,2) = tpredict;
-    
-    predict(tind-1,3) = Predict(particles, tind, tpredict, params);
-    
-    %particle storage
-    particlecollection = [particlecollection {particles}];
 end
 
-for i=1:NumParticlesNextGen
-    NS(i) = particles(i).NumStates;
-end
-
+% Store particle output
 
 
 end
