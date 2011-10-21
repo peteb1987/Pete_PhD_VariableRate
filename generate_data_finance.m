@@ -6,6 +6,7 @@ function [state_x, state_tau, observ, times, interp_x] = generate_data_finance( 
 dt = params.dt;
 F = params.F;
 C = params.C;
+R = params.R;
 
 % Generate x jump times
 x_jump_times = 0;
@@ -15,7 +16,7 @@ last_x_jump = 0;
 while (num_x_jumps==0)||(x_jump_times(num_x_jumps)<params.T)
     num_x_jumps = num_x_jumps + 1;
     x_jump_times(num_x_jumps,1) = last_x_jump + rande(1/params.x_jump_rate);
-    x_jump_mags(num_x_jumps,:) = [normrnd(params.x_jump_mu, params.x_jump_sigma), 0];
+    x_jump_mags(num_x_jumps,:) = [normrnd(params.x_jump_mn, params.x_jump_sd), 0];
     last_x_jump = x_jump_times(num_x_jumps);
 end
 
@@ -27,7 +28,7 @@ last_xdot_jump = 0;
 while (num_xdot_jumps==0)||(xdot_jump_times(num_xdot_jumps)<params.T)
     num_xdot_jumps = num_xdot_jumps + 1;
     xdot_jump_times(num_xdot_jumps,1) = last_xdot_jump + rande(1/params.xdot_jump_rate);
-    xdot_jump_mags(num_xdot_jumps,:) = [0 normrnd(params.xdot_jump_mu, params.xdot_jump_sigma)];
+    xdot_jump_mags(num_xdot_jumps,:) = [0 normrnd(params.xdot_jump_mn, params.xdot_jump_sd)];
     last_xdot_jump = xdot_jump_times(num_xdot_jumps);
 end
 
@@ -55,7 +56,7 @@ for k=1:params.K
     while jump_times(ti) < t
         
         % Diffusion
-        [A, Q] = diffusion_dynamics(F,C,(jump_times(ti)-interm_t));
+        [A, Q] = lti_disc(F,C,(jump_times(ti)-interm_t));
         interm_state = mvnrnd(A*interm_state, Q)';
         
         % Jump
@@ -67,17 +68,20 @@ for k=1:params.K
     end
     
     %Sample up to the next time point
-    [A, Q] = diffusion_dynamics(F,C,t-interm_t);
-    state(:,k) = mvnrnd(A*last_state, Q)';
+    [A, Q] = lti_disc(F,C,t-interm_t);
+    state(:,k) = mvnrnd(A*interm_state, Q)';
     
     % Sample observation
-    observ(1,k) = normrnd(state(1,k), params.obs_sigma);
+    observ(1,k) = mvnrnd(state(1,k), R);
     
     % Keep it for next time
     last_state = state(:,k);
     last_t = t;
     
 end
+
+% Remove states after the end of time
+jump_times(jump_times>params.T)=[];
 
 state_x = [];
 state_tau = jump_times;
