@@ -1,0 +1,131 @@
+function [ smooth_part_sets] = rb_vr_smoother( flags, params, times, observ, filt_part_sets)
+%VR_SMOOTHER Takes the variable rate filtering output and runs a particle
+%smoothing algorithm on it.
+
+% Set local variables for parameters
+K = params.K; S = params.S;
+ds = params.state_dim; do = params.obs_dim;
+F = params.F; C = params.C; H = params.H; R = params.R;
+
+% Initialise particle set array
+smooth_part_sets = cell(K,1);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Initialise Kth set                                                  %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Initialise array
+max_Ns = max(filt_part_sets{K}.pts_Ns);
+smooth_part_sets{K}.pts_Ns = zeros(S, 1);
+smooth_part_sets{K}.pts_tau = zeros(S, max_Ns);
+smooth_part_sets{K}.pts_type = zeros(S, max_Ns);
+smooth_part_sets{K}.pts_mu = zeros(S, max_Ns, ds);
+smooth_part_sets{K}.pts_P = zeros(S, max_Ns, ds, ds);
+smooth_part_sets{K}.pts_intmu = zeros(S, K, ds);
+smooth_part_sets{K}.pts_intP = zeros(S, K, ds, ds);
+
+Nchild = systematic_resample(exp(filt_part_sets{K}.pts_weights), S);
+Ncum = 0;
+
+% Loop through filter particles
+for ii = 1:filt_part_sets{K}.Np
+    
+    % How many offspring?
+    Ni = Nchild(ii);
+    
+    % Make Ni copies of the particle
+    Ns = filt_part_sets{K}.pts_Ns(ii);
+    smooth_part_sets{K}.pts_Ns(Ncum+1:Ncum+Ni) = repmat(filt_part_sets{K}.pts_Ns(ii), [Ni, 1]);
+    smooth_part_sets{K}.pts_tau(Ncum+1:Ncum+Ni,1:Ns) = repmat(filt_part_sets{K}.pts_tau(ii,1:Ns), [Ni, 1]);
+    smooth_part_sets{K}.pts_type(Ncum+1:Ncum+Ni,1:Ns) = repmat(filt_part_sets{K}.pts_type(ii,1:Ns), [Ni, 1]);
+    smooth_part_sets{K}.pts_mu(Ncum+1:Ncum+Ni,1:Ns,:) = repmat(filt_part_sets{K}.pts_mu(ii,1:Ns,:), [Ni, 1, 1]);
+    smooth_part_sets{K}.pts_P(Ncum+1:Ncum+Ni,1:Ns,:,:) = repmat(filt_part_sets{K}.pts_P(ii,1:Ns,:,:), [Ni, 1, 1, 1]);
+    smooth_part_sets{K}.pts_intmu(Ncum+1:Ncum+Ni,:,:) = repmat(filt_part_sets{K}.pts_intmu(ii,:,:), [Ni, 1, 1]);
+    smooth_part_sets{K}.pts_intP(Ncum+1:Ncum+Ni,:,:,:) = repmat(filt_part_sets{K}.pts_intP(ii,:,:,:), [Ni, 1, 1, 1]);
+    
+    Ncum = Ncum + Ni;
+    
+end
+
+% Loop through trajectories
+for ii = 1:S
+    
+    Np = filt_part_sets{K}.Np;
+    
+    % Get trajectory from the array - append an extra jump just after the data finishes
+    Ns = smooth_part_sets{K}.pts_Ns(ii);
+    tau = squeeze(smooth_part_sets{K}.pts_tau(ii,1:Ns));
+    type = squeeze(smooth_part_sets{K}.pts_type(ii,1:Ns));
+    mu = permute(smooth_part_sets{K}.pts_mu(ii,1:Ns,:),[2,3,1]);
+    P = permute(smooth_part_sets{K}.pts_P(ii,1:Ns,:,:),[2,3,4,1]);
+    intmu = squeeze(smooth_part_sets{K}.pts_intmu(ii,:,:));
+    intP = squeeze(smooth_part_sets{K}.pts_intP(ii,:,:,:));
+    
+    % Initialise arrays for the backward smoother
+    back_intmu = zeros(K,ds);
+    back_intP = zeros(K,ds,ds);
+    back_intmu(K,:) = intmu(K,:);
+    back_intP(K,:,:) = [params.x_start_sd 0; 0 params.xdot_start_sd];
+    
+    % Loop through time backwards
+    for k = K-1:-1:1
+        
+        t = times(k);
+        
+        % Calculate jump transition probabilities
+        [trans_prob, prev_ji, next_ji] = rb_transition_probability(params, t, filt_part_sets{k}.pts_tau, tau, filt_part_sets{k}.pts_type, type);
+        
+        % Run backwards filter
+        [A, Q] = lti_disc(F,eye(2),C,times(k+1)-t);
+        [b_mu, b_P] = kf_predict(back_intmu(k+1,:)', squeeze(back_intP(k+1,:,:)), inv(A), A\Q/A);
+        [b_mu_u, b_P_u] = kf_update(b_mu, b_P, observ(:,k)', H, R);
+        back_intmu(k,:) = b_mu_u';
+        back_intP(k,:,:) = (b_P_u+b_P_u')/2;
+        b_P = (b_P+b_P')/2;
+        
+        % Find forward estimated mean and covariance
+        f_mu = permute(filt_part_sets{k}.pts_intmu(:,k,:),[3,1,2]);
+        f_P = permute(filt_part_sets{k}.pts_intP(:,k,:,:),[3,4,1,2]);
+
+        % Calculate Gaussian weight term
+        comb_P = f_P + repmat(b_P, [1 1 Np]);
+        state_match_prob = log(mvnpdf(f_mu', b_mu', comb_P));
+        
+        % Calculate conditional weights
+        conditional_weights = filt_part_sets{k}.pts_weights + trans_prob + state_match_prob;
+        
+        % Sample
+        ind = randsample(length(conditional_weights), 1, true, exp(conditional_weights));
+        
+        % Update trajectory
+        tau = [filt_part_sets{k}.pts_tau(ind,1:prev_ji(ind)), tau(next_ji:end)];
+        type = [filt_part_sets{k}.pts_type(ind,1:prev_ji(ind)), type(next_ji:end)];
+        mu = [permute(filt_part_sets{k}.pts_mu(ind,1:prev_ji(ind),:),[2,3,1]); mu(next_ji:end,:)];
+        P = [permute(filt_part_sets{k}.pts_P(ind,1:prev_ji(ind),:,:),[2,3,4,1]); P(next_ji:end,:,:)];
+        Ns = length(tau);
+        
+        % Calculate interpolated values
+        f_P_chosen = squeeze(f_P(:,:,ind));
+        f_mu_chosen = squeeze(f_mu(:,ind));
+        av_P = inv(inv(b_P)+inv(f_P_chosen));
+        intmu(k,:) = av_P*(b_P\b_mu+f_P_chosen\f_mu_chosen);
+        intP(k,:,:) = av_P;
+        
+        % Store trajectory
+        smooth_part_sets{k}.tau(ii,1:Ns) = tau;
+        smooth_part_sets{k}.type(ii,1:Ns) = type;
+        smooth_part_sets{k}.mu(ii,1:Ns,:) = mu;
+        smooth_part_sets{k}.P(ii,1:Ns,:,:) = P;
+        smooth_part_sets{k}.Ns(ii) = Ns;
+        smooth_part_sets{k}.intmu(ii,:,:) = intmu;
+        smooth_part_sets{k}.intP(ii,:,:,:) = intP;
+        
+    end
+    
+    % Output
+    fprintf('*** Completed trajectory %d.\n', ii);
+    
+end
+
+end
+

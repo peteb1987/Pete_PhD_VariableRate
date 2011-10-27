@@ -2,6 +2,7 @@
 
 clup
 dbstop if error
+% dbstop if warning
 
 % DEFINE RANDOM SEED
 rand_seed = 1;
@@ -25,24 +26,43 @@ elseif flags.app == 2
     
 end
 
-% Generate some data
-[state_x, state_tau, observ, times, interp_x] = generate_data( flags, params );
+% % Generate some data
+% [state_x, state_tau, observ, times, interp_x] = generate_data( flags, params );
+
+% Load some data
+convert_data_Apr08;
+MAXK = 1000; params.K = MAXK;
+times = reg_grid(1:MAXK);
+observ = EURUSD_uniform(1:MAXK); interp_x = observ;
 
 % Plot data
 figure(1), plot(times, interp_x(1,:), 'b', times, observ, 'r'); drawnow;
 
-% Call inference algorithm
-[ part_sets ] = vr_inference( flags, params, times, observ );
+% Call filtering algorithm
+[ filt_part_sets ] = vr_filter( flags, params, times, observ );
 
 % Calculate jump time kernel density estimate
-[kd_times, jump_kdest] = jump_kernel_est(params.T, part_sets{params.K}.pts_tau);
+[filt_kd_times, filt_jump_kdest] = jump_kernel_est(times(params.K), filt_part_sets{params.K}.pts_tau);
 
-% Plot results
+% Plot filtering results
 figure(2);
-subplot(3,1,1), hold on, plot(times, part_sets{params.K}.pts_intmu(:,:,1)'); plot(times, interp_x(1,:), 'b', times, observ, 'r', 'LineWidth', 2);
-subplot(3,1,2), hold on, plot(times, part_sets{params.K}.pts_intmu(:,:,2)'); plot(times, interp_x(2,:), 'b', 'LineWidth', 2);
-subplot(3,1,3), hold on, plot(kd_times, jump_kdest), for tt=1:length(state_tau), plot([state_tau(tt),state_tau(tt)], [0,1]','r'); end
+subplot(3,1,1), hold on, plot(times, filt_part_sets{params.K}.pts_intmu(:,:,1)'); ylabel('x'); plot(times, interp_x(1,:), 'b', times, observ, 'r', 'LineWidth', 2);
+subplot(3,1,2), hold on, plot(times, filt_part_sets{params.K}.pts_intmu(:,:,2)'); ylabel('x-dot'); %plot(times, interp_x(2,:), 'b', 'LineWidth', 2);
+subplot(3,1,3), hold on, plot(filt_kd_times, filt_jump_kdest); ylabel('jump kd estimate'); %for tt=1:length(state_tau), plot([state_tau(tt),state_tau(tt)], [0,1]','r'); end
 drawnow;
 
 % Histogram number of states
-figure(3), hist(part_sets{params.K}.pts_Ns)
+figure(3), hist(filt_part_sets{params.K}.pts_Ns)
+
+% Call smoothing algorithm
+[ smooth_part_sets] = rb_vr_smoother( flags, params, times, observ, filt_part_sets);
+
+% Calculate jump time kernel density estimate
+[smooth_kd_times, smooth_jump_kdest] = jump_kernel_est(times(params.K), filt_part_sets{params.K}.pts_tau);
+
+% Plot smoothing results
+figure(4)
+subplot(3,1,1), hold on, plot(times, smooth_part_sets{2}.intmu(:,:,1)'); ylabel('x'); plot(times, interp_x(1,:), 'b', times, observ, 'r', 'LineWidth', 2);
+subplot(3,1,2), hold on, plot(times, smooth_part_sets{2}.intmu(:,:,2)'); ylabel('x-dot'); %plot(times, interp_x(2,:), 'b', 'LineWidth', 2);
+subplot(3,1,3), hold on, plot(smooth_kd_times, smooth_jump_kdest); ylabel('jump kd estimate'); %for tt=1:length(state_tau), plot([state_tau(tt),state_tau(tt)], [0,1]','r'); end
+drawnow;

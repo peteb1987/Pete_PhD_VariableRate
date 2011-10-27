@@ -39,6 +39,7 @@ jump_times = temp(:,1);
 jump_mags = temp(:,2:3);
 
 % Create a state vector array and observation vector array
+times = cumsum(dt*ones(params.K,1))-dt;
 state = zeros(2,params.K);
 observ = zeros(1,params.K);
 
@@ -48,7 +49,7 @@ last_t = 0;
 ti=1;               % jump counter
 for k=1:params.K
     
-    t = last_t + dt;
+    t = times(k);
     
     % Iteratively sample forwards to the next jump and through it
     interm_state = last_state;

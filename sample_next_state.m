@@ -1,4 +1,4 @@
-function [ next_x, next_tau, next_mu, next_P ] = sample_next_state( flags, params, last_t, last_tau, last_x, last_mu, last_P )
+function [ next_x, next_tau, type, next_mu, next_P ] = sample_next_state( flags, params, last_t, last_tau, last_x, last_mu, last_P )
 %SAMPLE_NEXT_TAU Generates the next variable jump time given the last one
 
 % last_tau is the previous jump time. last_t is the most recent time at
@@ -13,10 +13,10 @@ if flags.app == 1
     next_x_tau = last_t + rande(1/params.x_jump_rate);
     next_xdot_tau = last_t + rande(1/params.xdot_jump_rate);
     next_tau = min(next_x_tau, next_xdot_tau);
-    type = (next_tau==next_xdot_tau);
+    type = (next_tau==next_xdot_tau)+1;
     
     % Diffusion
-    [A, Q] = lti_disc(F,C,(next_tau-last_t));
+    [A, Q] = lti_disc(F,eye(1),C,(next_tau-last_t));
     next_mu = A*last_mu;
     next_P = A*last_P*A'+Q;
     

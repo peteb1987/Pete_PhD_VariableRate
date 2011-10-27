@@ -5,10 +5,10 @@ function [t_grid, jump_kdest] = jump_kernel_est(T, pts_tau)
 Np = size(pts_tau,1);
 
 % Make a finely spaced time grid
-t_grid = linspace(0,T,1000)';
+t_grid = linspace(0,T,1001)';
 
 % Set the standard deviation equal to the spacing
-sd = (t_grid(2)-t_grid(1));
+sd = 2*(t_grid(2)-t_grid(1));
 
 % Make a vector list of all the jump times
 jump_list = pts_tau(:);
@@ -18,6 +18,7 @@ jump_list(jump_list==0)=[];
 jump_kdest = zeros(size(t_grid));
 for tt = 1:length(jump_list)
     jump_kdest = jump_kdest + exp(-0.5*(t_grid-jump_list(tt)).^2/(sd^2))/Np;
+%     jump_kdest = jump_kdest + normpdf(t_grid,jump_list(tt),sd)/Np;
 end
 
 end
