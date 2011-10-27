@@ -49,9 +49,7 @@ end
 
 % Loop through trajectories
 for ii = 1:S
-    
-    Np = filt_part_sets{K}.Np;
-    
+
     % Get trajectory from the array - append an extra jump just after the data finishes
     Ns = smooth_part_sets{K}.pts_Ns(ii);
     tau = squeeze(smooth_part_sets{K}.pts_tau(ii,1:Ns));
@@ -72,16 +70,42 @@ for ii = 1:S
         
         t = times(k);
         
-        % Calculate jump transition probabilities
-        [trans_prob, prev_ji, next_ji] = rb_transition_probability(params, t, filt_part_sets{k}.pts_tau, tau, filt_part_sets{k}.pts_type, type);
+        Np = filt_part_sets{k}.Np;
+        
+        % Get k+1 backward estimated mean and covariance
+        b_mu = back_intmu(k+1,:)';
+        b_P = squeeze(back_intP(k+1,:,:));
         
         % Run backwards filter
-        [A, Q] = lti_disc(F,eye(2),C,times(k+1)-t);
-        [b_mu, b_P] = kf_predict(back_intmu(k+1,:)', squeeze(back_intP(k+1,:,:)), inv(A), A\Q/A);
-        [b_mu_u, b_P_u] = kf_update(b_mu, b_P, observ(:,k)', H, R);
-        back_intmu(k,:) = b_mu_u';
-        back_intP(k,:,:) = (b_P_u+b_P_u')/2;
+        tt = t;
+        [prev_jump, prev_ji] = max(tau(tau<t));
+        while (k>1)&&(tt>prev_jump)&&(prev_jump>times(k-1))
+            % Diffuse
+            [A, Q] = lti_disc(F,eye(2),C,tt-prev_jump);
+            [b_mu, b_P] = kf_predict(b_mu, b_P, inv(A), A\Q/A);
+            % Jump
+            if type(prev_ji)==1
+                % x jump
+                b_P = b_P + [params.x_jump_sd^2 0; 0 0];
+            elseif type(prev_ji)==2
+                % xdot jump
+                b_P = b_P + [0 0; 0 params.xdot_jump_sd^2];
+            end
+            tt = prev_jump;
+            prev_ji = prev_ji - 1;
+            prev_jump = tau(prev_ji);
+        end
+        if tt>0
+            % Diffuse
+            [A, Q] = lti_disc(F,eye(2),C,tt-times(k-1));
+            [b_mu, b_P] = kf_predict(b_mu, b_P, inv(A), A\Q/A);
+        end
+        % KF update
+        [b_mu, b_P] = kf_update(b_mu, b_P, observ(:,k)', H, R);
         b_P = (b_P+b_P')/2;
+        % Store
+        back_intmu(k,:) = b_mu';
+        back_intP(k,:,:) = (b_P+b_P')/2;
         
         % Find forward estimated mean and covariance
         f_mu = permute(filt_part_sets{k}.pts_intmu(:,k,:),[3,1,2]);
@@ -91,8 +115,14 @@ for ii = 1:S
         comb_P = f_P + repmat(b_P, [1 1 Np]);
         state_match_prob = log(mvnpdf(f_mu', b_mu', comb_P));
         
+        % Calculate jump transition probabilities
+        [trans_prob, prev_ji, next_ji] = rb_transition_probability(params, t, filt_part_sets{k}.pts_tau, tau, filt_part_sets{k}.pts_type, type);
+        
         % Calculate conditional weights
         conditional_weights = filt_part_sets{k}.pts_weights + trans_prob + state_match_prob;
+        conditional_weights = conditional_weights-max(conditional_weights);
+        temp = exp(conditional_weights); temp = temp/sum(temp);
+        conditional_weights = log(temp);
         
         % Sample
         ind = randsample(length(conditional_weights), 1, true, exp(conditional_weights));
@@ -112,13 +142,13 @@ for ii = 1:S
         intP(k,:,:) = av_P;
         
         % Store trajectory
-        smooth_part_sets{k}.tau(ii,1:Ns) = tau;
-        smooth_part_sets{k}.type(ii,1:Ns) = type;
-        smooth_part_sets{k}.mu(ii,1:Ns,:) = mu;
-        smooth_part_sets{k}.P(ii,1:Ns,:,:) = P;
-        smooth_part_sets{k}.Ns(ii) = Ns;
-        smooth_part_sets{k}.intmu(ii,:,:) = intmu;
-        smooth_part_sets{k}.intP(ii,:,:,:) = intP;
+        smooth_part_sets{k}.pts_tau(ii,1:Ns) = tau;
+        smooth_part_sets{k}.pts_type(ii,1:Ns) = type;
+        smooth_part_sets{k}.pts_mu(ii,1:Ns,:) = mu;
+        smooth_part_sets{k}.pts_P(ii,1:Ns,:,:) = P;
+        smooth_part_sets{k}.pts_Ns(ii) = Ns;
+        smooth_part_sets{k}.pts_intmu(ii,:,:) = intmu;
+        smooth_part_sets{k}.pts_intP(ii,:,:,:) = intP;
         
     end
     
@@ -128,4 +158,5 @@ for ii = 1:S
 end
 
 end
+
 

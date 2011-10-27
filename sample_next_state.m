@@ -21,10 +21,10 @@ if flags.app == 1
     next_P = A*last_P*A'+Q;
     
     % Jump
-    if type==0
+    if type==1
         % x jump
         next_P = next_P + [params.x_jump_sd^2 0; 0 0];
-    elseif type==1
+    elseif type==2
         % xdot jump
         next_P = next_P + [0 0; 0 params.xdot_jump_sd^2];
     end

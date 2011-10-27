@@ -178,9 +178,13 @@ for k = 2:K
             % RB-SPECIFIC. MOVE IT INTO A FUNCTION
             [A, Q] = lti_disc(params.F,eye(1),params.C,t-last_t);
             [p_mu, p_P] = kf_predict(last_mu, last_P, A, Q);
-            [mu_u, P_u, ~, ~, ~, pred_lhood] = kf_update(p_mu, p_P, observ(:,k)', params.H, params.R);
-            pts_intmu(jj,k,:) = mu_u;
-            pts_intP(jj,k,:,:) = (P_u+P_u')/2;
+            [pts_intmu(jj,k,:), pts_intP(jj,k,:,:), ~, ~, ~, pred_lhood] = kf_update(p_mu, p_P, observ(:,k)', params.H, params.R);
+
+%             [A, Q] = lti_disc(params.F,eye(1),params.C,t-last_t);
+%             [p_mu, p_P] = kf_predict(last_mu, last_P, A, Q);
+%             [mu_u, P_u, ~, ~, ~, pred_lhood] = kf_update(p_mu, p_P, observ(:,k)', params.H, params.R);
+%             pts_intmu(jj,k,:) = mu_u;
+%             pts_intP(jj,k,:,:) = (P_u+P_u')/2;
             
             assert(all(eig(squeeze(pts_intP(jj,k,:,:)))>=-1E-6))
             
