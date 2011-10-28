@@ -4,7 +4,7 @@
 
 clup
 dbstop if error
-% dbstop if warning
+dbstop if warning
 
 % DEFINE RANDOM SEED
 rand_seed = 1;
@@ -53,10 +53,10 @@ figure(1), plot(times, interp_x(1,:), 'b', times, observ, 'r'); drawnow;
 [filt_kd_times, filt_jump_kdest] = jump_kernel_est(times(params.K), filt_part_sets{params.K}.pts_tau);
 
 % Plot filtering results
-figure(2);
+figure(2); clf;
 subplot(3,1,1), hold on, plot(times, filt_part_sets{params.K}.pts_intmu(:,:,1)'); ylabel('x'); plot(times, interp_x(1,:), 'b', times, observ, 'r', 'LineWidth', 2);
-subplot(3,1,2), hold on, plot(times, filt_part_sets{params.K}.pts_intmu(:,:,2)'); ylabel('x-dot'); %plot(times, interp_x(2,:), 'b', 'LineWidth', 2);
-subplot(3,1,3), hold on, plot(filt_kd_times, filt_jump_kdest); ylabel('jump kd estimate'); %for tt=1:length(state_tau), plot([state_tau(tt),state_tau(tt)], [0,1]','r'); end
+subplot(3,1,2), hold on, plot(times, filt_part_sets{params.K}.pts_intmu(:,:,2)'); ylabel('x-dot');% plot(times, interp_x(2,:), 'b', 'LineWidth', 2);
+subplot(3,1,3), hold on, plot(filt_kd_times, filt_jump_kdest); ylabel('jump kd estimate');% for tt=1:length(state_tau), plot([state_tau(tt),state_tau(tt)], [0,1]','r'); end
 drawnow;
 
 % Histogram number of states
@@ -71,8 +71,8 @@ figure(3), hist(filt_part_sets{params.K}.pts_Ns)
 [smooth_kd_times, smooth_jump_kdest] = jump_kernel_est(times(params.K), smooth_part_sets{2}.pts_tau);
 
 % Plot smoothing results
-figure(4)
-subplot(3,1,1), hold on, plot(times, smooth_part_sets{2}.pts_intmu(:,:,1)'); ylabel('x'); plot(times, interp_x(1,:), 'b', times, observ, 'r', 'LineWidth', 2);
-subplot(3,1,2), hold on, plot(times, smooth_part_sets{2}.pts_intmu(:,:,2)'); ylabel('x-dot'); %plot(times, interp_x(2,:), 'b', 'LineWidth', 2);
+figure(4); clf;
+subplot(3,1,1), hold on, plot(times, squeeze(smooth_part_sets{1}.pts_intmu(:,1,:))); ylabel('x'); plot(times, interp_x(1,:), 'b', times, observ, 'r', 'LineWidth', 2);
+subplot(3,1,2), hold on, plot(times, squeeze(smooth_part_sets{1}.pts_intmu(:,2,:))); ylabel('x-dot'); %plot(times, interp_x(2,:), 'b', 'LineWidth', 2);
 subplot(3,1,3), hold on, plot(smooth_kd_times, smooth_jump_kdest); ylabel('jump kd estimate'); %for tt=1:length(state_tau), plot([state_tau(tt),state_tau(tt)], [0,1]','r'); end
 drawnow;

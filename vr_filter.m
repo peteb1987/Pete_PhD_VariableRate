@@ -47,7 +47,7 @@ last_pts_P(:,1,:,:) = permute(repmat([params.x_start_sd^2, 0; 0, params.xdot_sd^
 last_pts_intx(:,1,:) = last_pts_x(:,1,:);
 last_pts_intmu(:,1,:) = last_pts_mu(:,1,:);
 last_pts_intP(:,1,:,:) = last_pts_P(:,1,:,:);
-last_t = 1;
+last_t = 0;
 last_Np = Np;
 last_MNJ = MNJ;
 
