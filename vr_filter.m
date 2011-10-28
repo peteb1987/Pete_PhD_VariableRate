@@ -1,4 +1,4 @@
-function [ part_sets ] = vr_inference( flags, params, times, observ )
+function [ part_sets ] = vr_filter( flags, params, times, observ )
 %VR_INFERENCE Run variable rate particle filter and smoother algorithms
 
 % params is a structure with all the model and algorithm parameters

@@ -82,7 +82,7 @@ for ii = 1:S
         while (k>1)&&(tt>prev_jump)&&(prev_jump>times(k-1))
             % Diffuse
             [A, Q] = lti_disc(F,eye(2),C,tt-prev_jump);
-            [b_mu, b_P] = kf_predict(b_mu, b_P, inv(A), A\Q/A);
+            [b_mu, b_P] = kf_predict(b_mu, b_P, inv(A), A\Q/A');
             % Jump
             if type(prev_ji)==1
                 % x jump
@@ -98,11 +98,10 @@ for ii = 1:S
         if tt>0
             % Diffuse
             [A, Q] = lti_disc(F,eye(2),C,tt-times(k-1));
-            [b_mu, b_P] = kf_predict(b_mu, b_P, inv(A), A\Q/A);
+            [b_mu, b_P] = kf_predict(b_mu, b_P, inv(A), A\Q/A');
         end
         % KF update
         [b_mu, b_P] = kf_update(b_mu, b_P, observ(:,k)', H, R);
-        b_P = (b_P+b_P')/2;
         % Store
         back_intmu(k,:) = b_mu';
         back_intP(k,:,:) = (b_P+b_P')/2;

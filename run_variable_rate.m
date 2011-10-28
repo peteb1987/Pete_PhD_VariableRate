@@ -1,5 +1,7 @@
 % Test script for variable rate filtering and smoothing algorithms
 
+%%
+
 clup
 dbstop if error
 % dbstop if warning
@@ -10,6 +12,8 @@ rand_seed = 1;
 % Set random seed
 s = RandStream('mt19937ar', 'seed', rand_seed);
 RandStream.setDefaultStream(s);
+
+%%
 
 % Set flags and parameters
 flags.app = 1;                  % 1 = finance (linear jump diffusion), 2 = tracking (curvilinear dynamics)
@@ -26,6 +30,8 @@ elseif flags.app == 2
     
 end
 
+%%
+
 % % Generate some data
 % [state_x, state_tau, observ, times, interp_x] = generate_data( flags, params );
 
@@ -37,6 +43,8 @@ observ = EURUSD_uniform(1:MAXK); interp_x = observ;
 
 % Plot data
 figure(1), plot(times, interp_x(1,:), 'b', times, observ, 'r'); drawnow;
+
+%%
 
 % Call filtering algorithm
 [ filt_part_sets ] = vr_filter( flags, params, times, observ );
@@ -53,6 +61,8 @@ drawnow;
 
 % Histogram number of states
 figure(3), hist(filt_part_sets{params.K}.pts_Ns)
+
+%%
 
 % Call smoothing algorithm
 [ smooth_part_sets] = rb_vr_smoother( flags, params, times, observ, filt_part_sets);
