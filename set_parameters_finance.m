@@ -30,7 +30,7 @@ params.C = [params.x_sd^2 0; 0 params.xdot_sd^2];
 params.R = params.obs_sd^2;
 
 % Algorithm
-params.Np = 100;            % Target number of filtering particles
+params.Np = 200;            % Target number of filtering particles
 params.S = 100;             % Number of smoothing trajectories
 params.x_start_sd = 40;
 params.xdot_start_sd = 40;

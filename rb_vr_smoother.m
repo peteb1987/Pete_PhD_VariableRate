@@ -186,17 +186,17 @@ for ii = 1:S
             end
             ji = ji + 1;
         end
-        
-        % Kalman Filter
-        [pred_m, pred_P] = kf_predict(last_mu, last_P, A, Q);
-        [last_mu, last_P] = kf_update(pred_m, pred_P, observ(:,k)', H, R);
-        
+                
         % Store
         A_arr(:,:,k) = A;
         Q_arr(:,:,k) = Q;
         mu_arr(:,k) = last_mu;
         P_arr(:,:,k) = last_P;
         
+        % Kalman Filter
+        [pred_m, pred_P] = kf_predict(last_mu, last_P, A, Q);
+        [last_mu, last_P] = kf_update(pred_m, pred_P, observ(:,k)', H, R);
+
         last_t = t;
         
     end

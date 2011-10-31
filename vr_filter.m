@@ -140,7 +140,7 @@ for k = 2:K
                 
                 % Update Kalman filter to current time - THIS IS
                 % RB-SPECIFIC. MOVE IT INTO A FUNCTION
-                [A, Q] = lti_disc(params.F,eye(1),params.C,t-tau);
+                [A, Q] = lti_disc(params.F,eye(2),params.C,t-tau);
                 [p_mu, p_P] = kf_predict(mu, P, A, Q);
                 [pts_intmu(jj,k,:), pts_intP(jj,k,:,:), ~, ~, ~, pred_lhood] = kf_update(p_mu, p_P, observ(:,k)', params.H, params.R);
                 
@@ -176,7 +176,7 @@ for k = 2:K
             
             % Update Kalman filter to current time - THIS IS
             % RB-SPECIFIC. MOVE IT INTO A FUNCTION
-            [A, Q] = lti_disc(params.F,eye(1),params.C,t-last_t);
+            [A, Q] = lti_disc(params.F,eye(2),params.C,t-last_t);
             [p_mu, p_P] = kf_predict(last_mu, last_P, A, Q);
             [pts_intmu(jj,k,:), pts_intP(jj,k,:,:), ~, ~, ~, pred_lhood] = kf_update(p_mu, p_P, observ(:,k)', params.H, params.R);
 

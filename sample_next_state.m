@@ -16,7 +16,7 @@ if flags.app == 1
     type = (next_tau==next_xdot_tau)+1;
     
     % Diffusion
-    [A, Q] = lti_disc(F,eye(1),C,(next_tau-last_t));
+    [A, Q] = lti_disc(F,eye(2),C,(next_tau-last_t));
     next_mu = A*last_mu;
     next_P = A*last_P*A'+Q;
     

@@ -57,7 +57,7 @@ for k=1:params.K
     while jump_times(ti) < t
         
         % Diffusion
-        [A, Q] = lti_disc(F,C,(jump_times(ti)-interm_t));
+        [A, Q] = lti_disc(F,eye(2),C,(jump_times(ti)-interm_t));
         interm_state = mvnrnd(A*interm_state, Q)';
         
         % Jump
@@ -69,7 +69,7 @@ for k=1:params.K
     end
     
     %Sample up to the next time point
-    [A, Q] = lti_disc(F,C,t-interm_t);
+    [A, Q] = lti_disc(F,eye(2),C,t-interm_t);
     state(:,k) = mvnrnd(A*interm_state, Q)';
     
     % Sample observation
