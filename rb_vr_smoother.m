@@ -120,7 +120,8 @@ for ii = 1:S
 
         % Calculate Gaussian weight term
         comb_P = f_P + repmat(pred_b_P, [1 1 Np]);
-        state_match_prob = log(mvnpdf(f_mu', pred_b_mu', comb_P));
+%         state_match_prob = log(mvnpdf(f_mu', pred_b_mu', comb_P));
+        state_match_prob = log_mvnpdf_fast_batch(f_mu, repmat(pred_b_mu,1,Np), comb_P);
         
         % Calculate jump transition probabilities
         [trans_prob, prev_ji, next_ji] = rb_transition_probability(params, t, filt_part_sets{k}.pts_tau, tau, filt_part_sets{k}.pts_type, type);
@@ -169,8 +170,11 @@ for ii = 1:S
     last_t = 0;
     last_mu = [observ(:,1)'; 0];
     last_P = [params.x_start_sd^2, 0; 0, params.xdot_sd^2];
+    mu_arr(:,1) = last_mu;
+    P_arr(:,:,1) = last_P;
+    
     ji = 2;
-    for k = 1:K
+    for k = 2:K
         
         t = times(k);
         
@@ -188,8 +192,8 @@ for ii = 1:S
         end
                 
         % Store
-        A_arr(:,:,k) = A;
-        Q_arr(:,:,k) = Q;
+        A_arr(:,:,k-1) = A;
+        Q_arr(:,:,k-1) = Q;
         mu_arr(:,k) = last_mu;
         P_arr(:,:,k) = last_P;
         
