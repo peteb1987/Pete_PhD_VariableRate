@@ -1,4 +1,4 @@
-function [state_x, state_tau, observ, times, interp_x] = generate_data_finance( params )
+function [state_tau, observ, times, interp_x] = generate_data_finance( params )
 %GENERATE_DATA_FINANCE Generate jump diffusion finance data
 
 % This version uses a regular time grid.
@@ -84,7 +84,6 @@ end
 % Remove states after the end of time
 jump_times(jump_times>params.T)=[];
 
-state_x = [];
 state_tau = jump_times;
 interp_x = state;
 times = (0:params.K-1)*dt;
