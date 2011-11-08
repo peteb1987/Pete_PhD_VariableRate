@@ -30,12 +30,12 @@ ti=2;                               % jump counter
 w = mvnrnd(zeros(1,dr), Q)';        % starting r.v.s
 x = params.start_state;             % starting state
 last_x = x;
-last_t = 0;
+last_tau = 0;
 
 % Store first jump values
 state(:, 1) = x;
 ranvar(:, 1) = w;
-mu = tracking_calc_obs_mean(flags, x);
+mu = tracking_calc_obs_mean(flags, params, x);
 observ(:,1) = mvnrnd(mu', R)';
 interp_state(:,1) = x;
 
@@ -48,7 +48,7 @@ for k=2:params.K
     while tau(ti) < t
         
         % New state
-        x = tracking_calc_next_state(flags, last_x, tau(ti)-last_t, w);
+        x = tracking_calc_next_state(flags, last_x, tau(ti)-last_tau, w);
         w = mvnrnd(zeros(1,dr), Q)';
         
         % Store state
@@ -56,7 +56,7 @@ for k=2:params.K
         ranvar(:,ti) = w;
         
         % Update last_ variables
-        last_t = tau(ti);
+        last_tau = tau(ti);
         last_x = x;
         
         % Increment jump counter
@@ -64,19 +64,15 @@ for k=2:params.K
         
     end
     
-    % Move up to the next time point
-    x = tracking_calc_next_state(flags, last_x, t-last_t, w);
+    % Interpolate state
+    x = tracking_calc_next_state(flags, last_x, t-last_tau, w);
     
     % Store it
     interp_state(:,k) = x;
     
     % Sample observation
-    mu = tracking_calc_obs_mean(flags, x);
+    mu = tracking_calc_obs_mean(flags, params, x);
     observ(:,k) = mvnrnd(mu', R)';
-    
-    % Keep it for next time
-    last_x = x;
-    last_t = t;
     
 end
 

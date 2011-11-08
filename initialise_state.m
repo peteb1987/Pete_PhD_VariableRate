@@ -14,7 +14,12 @@ if flags.app == 1
     pts_P(:,1,:,:) = permute(repmat([params.x_start_sd^2, 0; 0, params.xdot_start_sd^2], [1, 1, Np]), [3,1,2]);
     pts_x(:,1,:) = repmat(x_init, Np, 1);
 elseif flags.app == 2
-    x_init = [observ(:,1)', params.start_bng, params.start_speed];
+    if flags.obs_mod == 1
+        x_init = [observ(1:2,1)', params.start_bng, params.start_speed];
+    elseif flags.obs_mod == 2
+        [x1, x2] = pol2cart(observ(1,1), observ(2,1));
+        x_init = [x1, x2, params.start_bng, params.start_speed];
+    end
     start_pos = mvnrnd(repmat(x_init, Np, 1), params.start_var);
     start_pos(:,4) = max(start_pos(:,4), params.min_speed);
     pts_x(:,1,:) = start_pos;

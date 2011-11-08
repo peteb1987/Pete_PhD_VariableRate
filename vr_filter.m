@@ -31,9 +31,9 @@ last_pts_weights = log(ones(Np, 1)/Np);             % Particle weights
 last_pts_Ns = ones(Np, 1);                          % Number of states per particle
 last_pts_tau = zeros(Np, MNJ);                      % Particle jump times
 last_pts_type = zeros(Np, MNJ);                     % Particle jump types
-last_pts_intx = zeros(Np, K, ds);                   % States interpolated at observation times
-last_pts_intmu = zeros(Np, K, ds);                  % Means interpolated at observation times (for rb case)
-last_pts_intP = zeros(Np, K, ds, ds);               % Covariances interpolated at observation times (for rb case)
+last_pts_intx = zeros(Np, 1, ds);                   % States interpolated at observation times
+last_pts_intmu = zeros(Np, 1, ds);                  % Means interpolated at observation times (for rb case)
+last_pts_intP = zeros(Np, 1, ds, ds);               % Covariances interpolated at observation times (for rb case)
 
 % Initialise first points
 [last_pts_x, last_pts_mu, last_pts_P, last_pts_w] = initialise_state(flags, params, Np, MNJ, observ);
@@ -75,9 +75,9 @@ for k = 2:K
     pts_w = zeros(Np, MNJ, dr);                    % Random variables
     pts_mu = zeros(Np, MNJ, ds);                   % Particle means (for rb case)
     pts_P = zeros(Np, MNJ, ds, ds);                % Particle covariances (for rb case)
-    pts_intx = zeros(Np, K, ds);                   % States interpolated at observation times
-    pts_intmu = zeros(Np, K, ds);                  % Means interpolated at observation times (for rb case)
-    pts_intP = zeros(Np, K, ds, ds);               % Covariances interpolated at observation times (for rb case)
+    pts_intx = zeros(Np, k, ds);                   % States interpolated at observation times
+    pts_intmu = zeros(Np, k, ds);                  % Means interpolated at observation times (for rb case)
+    pts_intP = zeros(Np, k, ds, ds);               % Covariances interpolated at observation times (for rb case)
     
     % New particle counter
     jj = 0;
@@ -128,9 +128,9 @@ for k = 2:K
                 pts_w(jj,1:last_MNJ,:) = last_pts_w(ii,:,:);
                 pts_mu(jj,1:last_MNJ,:) = last_pts_mu(ii,:,:);
                 pts_P(jj,1:last_MNJ,:,:) = last_pts_P(ii,:,:,:);
-                pts_intx(jj,:,:) = last_pts_intx(ii,:,:);
-                pts_intmu(jj,:,:) = last_pts_intmu(ii,:,:);
-                pts_intP(jj,:,:,:) = last_pts_intP(ii,:,:,:);
+                pts_intx(jj,1:k-1,:) = last_pts_intx(ii,:,:);
+                pts_intmu(jj,1:k-1,:) = last_pts_intmu(ii,:,:);
+                pts_intP(jj,1:k-1,:,:) = last_pts_intP(ii,:,:,:);
                 
                 % Add new bits
                 pts_weights(jj) = last_pts_weights(ii)-log(Ni);
@@ -171,11 +171,11 @@ for k = 2:K
             pts_w(jj,1:last_MNJ,:) = last_pts_w(ii,:,:);
             pts_mu(jj,1:last_MNJ,:) = last_pts_mu(ii,:,:);
             pts_P(jj,1:last_MNJ,:,:) = last_pts_P(ii,:,:,:);
-            pts_intx(jj,:,:) = last_pts_intx(ii,:,:);
-            pts_intmu(jj,:,:) = last_pts_intmu(ii,:,:);
-            pts_intP(jj,:,:,:) = last_pts_intP(ii,:,:,:);
+            pts_intx(jj,1:k-1,:) = last_pts_intx(ii,:,:);
+            pts_intmu(jj,1:k-1,:) = last_pts_intmu(ii,:,:);
+            pts_intP(jj,1:k-1,:,:) = last_pts_intP(ii,:,:,:);
             
-            [pred_lhood, pts_intx(jj,k,:), pts_intmu(jj,k,:), pts_intP(jj,k,:,:)] = interp_and_lhood(flags, params, last_t, t, last_w, last_intx, last_intmu, last_intP, observ(:,k));
+            [pred_lhood, pts_intx(jj,k,:), pts_intmu(jj,k,:), pts_intP(jj,k,:,:)] = interp_and_lhood(flags, params, last_tau, t, last_w, last_x, last_intmu, last_intP, observ(:,k));
 
 %             assert(all(eig(squeeze(pts_intP(jj,k,:,:)))>=-1E-6))
             

@@ -30,7 +30,7 @@ x2 = last_x(2);
 x = zeros(size(last_x));
 
 % Calculate new speed, and handle lower limiting
-new_sdot = sdot + aT*dt + aS*dt;
+new_sdot = sdot + aT*dt;
 new_sdot(new_sdot<min_speed) = min_speed;
 aT = (new_sdot-sdot)/dt;
 
@@ -38,9 +38,9 @@ SF1 = 4*aT.^2 + aP.^2;
 
 % Calculate new bearing
 if aT~=0
-    new_psi = psi + (aP./aT).*log(new_sdot./sdot) + aB*dt;
+    new_psi = psi + (aP./aT).*log(new_sdot./sdot);
 else
-    new_psi = psi + (aP.*dt)./sdot + aB*dt;
+    new_psi = psi + (aP.*dt)./sdot;
 end
 
 % Calculate new x1 and x2
@@ -57,6 +57,9 @@ else
     new_x1 = x1 + ( sdot*dt.*cos(psi) ) + aX1*dt;
     new_x2 = x2 + ( sdot*dt.*sin(psi) ) + aX2*dt;
 end
+
+new_sdot = new_sdot + aS*dt;
+new_psi = new_psi + aB*dt;
 
 x(1) = new_x1;
 x(2) = new_x2;

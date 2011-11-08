@@ -17,10 +17,10 @@ RandStream.setDefaultStream(s);
 
 % Set flags and parameters
 flags.app = 2;                  % 1 = finance (linear jump diffusion), 2 = tracking (curvilinear dynamics)
-flags.dyn_mod = 1;              % 1 = tangential and perpendicular accelarations only
+flags.dyn_mod = 3;              % 1 = tangential and perpendicular accelarations only
                                 % 2 = added x and y noise
                                 % 3 = added bearing and speed noise
-flags.obs_mod = 1;              % 1 = linear gaussian
+flags.obs_mod = 2;              % 1 = linear gaussian
                                 % 2 = radar with gaussian noise
 flags.gen_data = true;          % true = generate data. false = load real data
 
@@ -65,7 +65,12 @@ elseif flags.app == 2
     figure(1), hold on, xlim([-200, 200]), ylim([-200, 200])
     plot(interp_state(1,:), interp_state(2,:), 'b');
     plot(state(1,:), state(2,:), 'g*');
-    plot(observ(1,:), observ(2,:), 'r');
+    if flags.obs_mod == 1
+        plot(observ(1,:), observ(2,:), 'r');
+    elseif flags.obs_mod == 2
+        [x1, x2] = pol2cart(observ(1,:), observ(2,:));
+        plot(x1, x2, 'r');
+    end
 end
 
 %% Filtering
