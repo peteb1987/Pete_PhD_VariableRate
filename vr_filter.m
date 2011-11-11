@@ -14,7 +14,7 @@ times = times - times(1);
 % Set local variables for commonly-used parameters
 ds = params.state_dim;      % State dimensionality
 do = params.obs_dim;        % Observation dimensionality
-dr = params.rnd_dim;        % Observation dimensionality
+dr = params.rnd_dim;        % Random variable dimensionality
 Np = params.Np;             % Number of particles (this is overwritten in each iteration of the loop)
 
 % Create an array to store particle sets for each time frame
@@ -181,6 +181,26 @@ for k = 2:K
             
             % Update weight
             pts_weights(jj) = pts_weights(jj) + pred_lhood;
+            
+            % See if its a while since there was last a state
+            if (rand<0.05)&&((t-last_tau)>(params.dt*10))
+                
+                % Propose a resample-move step to adjust the last w
+                [w, ppsl_prob, rev_ppsl_prob] = tracking_acceleration_proposal(flags, params, last_x, last_tau, last_w, times(1:k), observ(:,1:k));
+                
+                % Calculate likelihoods
+                [old_lhood] = tracking_calc_likelihood(flags, params, last_x, last_tau, last_w, times(1:k), observ(:,1:k));
+                [new_lhood] = tracking_calc_likelihood(flags, params, last_x, last_tau, w, times(1:k), observ(:,1:k));
+                old_accel_prob = log(mvnpdf(last_w', zeros(1,params.state_dim), params.Q));
+                new_accel_prob = log(mvnpdf(w', zeros(1,params.state_dim), params.Q));
+                
+                % MH acceptance
+                acc_prob = (new_lhood+new_accel_prob)-(old_lhood+old_accel_prob)+(rev_ppsl_prob-ppsl_prob);
+                if rand<acc_prob
+                    pts_w(jj,pts_Ns(jj),:) = w;
+                end
+                
+            end
             
         end
         

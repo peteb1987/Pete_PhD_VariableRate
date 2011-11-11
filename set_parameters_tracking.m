@@ -35,7 +35,7 @@ elseif flags.obs_mod == 2
     if params.obs_dim == 2
         params.R = diag([(pi/90)^2, 1]);
     else
-        params.R = diag([(pi/90)^2, 10, (pi/90)^2, 10]);
+        params.R = diag([(pi/90)^2, 10, (pi/45)^2, 0.1]);
     end
 end
 

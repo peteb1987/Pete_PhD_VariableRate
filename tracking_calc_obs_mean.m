@@ -11,9 +11,8 @@ elseif flags.obs_mod == 2
     [mu(1), mu(2)] = cart2pol(x(1), x(2));
     if params.obs_dim == 4
         % Bearing and range rate
-        xdot = x(4)*cos(x(3));
-        ydot = x(4)*sin(x(3));
-        [mu(3), mu(4)] = cart2pol(xdot, ydot);
+        mu(4) = x(4)*cos(x(3)-mu(1));
+        mu(3) = x(4)*sin(x(3)-mu(1))/mu(2);
     end
 end
 

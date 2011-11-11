@@ -2,6 +2,13 @@ function [ x ] = tracking_calc_next_state( flags, last_x, dt, w )
 %TRACKING_CALC_NEXT_STATE Calculate the next state given the dtrevious one,
 %the resdtective times, and the random variables
 
+% If no times has passed (i.e. we're looking at an observation exactly
+% after a jump) then return straight away. (This happens at t=0)
+if dt==0
+    x=last_x;
+    return
+end
+
 % All hell breaks lose if s hit 0, so lets limit it!
 min_speed = 0.5;
 
