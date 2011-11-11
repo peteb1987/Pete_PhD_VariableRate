@@ -84,7 +84,7 @@ for k = 2:K
     
     % Calculate number of children for each particle
     round_weights = max(1/last_Np, exp(last_pts_weights));
-    round_weights(last_pts_weights-max(last_pts_weights)<-1000)=0;
+    round_weights(last_pts_weights-max(last_pts_weights)<-5000)=0;
     round_weights = round_weights/sum(round_weights);
     Nchild = systematic_resample(round_weights, params.Np);
 %     Nchild = max(1, floor(last_Np*exp(last_pts_weights)));
@@ -183,21 +183,23 @@ for k = 2:K
             pts_weights(jj) = pts_weights(jj) + pred_lhood;
             
             % See if its a while since there was last a state
-            if (rand<0.05)&&((t-last_tau)>(params.dt*10))
+            if (rand<1)&&((t-last_tau)>(params.dt*20))
                 
                 % Propose a resample-move step to adjust the last w
                 [w, ppsl_prob, rev_ppsl_prob] = tracking_acceleration_proposal(flags, params, last_x, last_tau, last_w, times(1:k), observ(:,1:k));
                 
                 % Calculate likelihoods
-                [old_lhood] = tracking_calc_likelihood(flags, params, last_x, last_tau, last_w, times(1:k), observ(:,1:k));
-                [new_lhood] = tracking_calc_likelihood(flags, params, last_x, last_tau, w, times(1:k), observ(:,1:k));
-                old_accel_prob = log(mvnpdf(last_w', zeros(1,params.state_dim), params.Q));
-                new_accel_prob = log(mvnpdf(w', zeros(1,params.state_dim), params.Q));
+                [old_lhood, ~] = tracking_calc_likelihood(flags, params, last_x, last_tau, last_w, times(1:k), observ(:,1:k));
+                [new_lhood, ppsl_intx] = tracking_calc_likelihood(flags, params, last_x, last_tau, w, times(1:k), observ(:,1:k));
+                old_accel_prob = log(mvnpdf(last_w', zeros(1,params.rnd_dim), params.Q));
+                new_accel_prob = log(mvnpdf(w', zeros(1,params.rnd_dim), params.Q));
                 
                 % MH acceptance
                 acc_prob = (new_lhood+new_accel_prob)-(old_lhood+old_accel_prob)+(rev_ppsl_prob-ppsl_prob);
                 if rand<acc_prob
+                    start_idx = find(min(times(times>last_tau))==times);
                     pts_w(jj,pts_Ns(jj),:) = w;
+                    pts_intx(jj,start_idx:k,:) = ppsl_intx(1,start_idx:k,:);
                 end
                 
             end

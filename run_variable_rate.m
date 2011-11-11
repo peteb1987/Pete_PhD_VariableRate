@@ -7,7 +7,7 @@ dbstop if error
 % dbstop if warning
 
 % DEFINE RANDOM SEED
-rand_seed = 0;
+rand_seed = 1;
 
 % Set random seed
 s = RandStream('mt19937ar', 'seed', rand_seed);

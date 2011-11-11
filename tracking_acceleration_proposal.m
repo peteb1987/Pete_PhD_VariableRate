@@ -10,6 +10,7 @@ function [w, ppsl_prob, rev_ppsl_prob] = tracking_acceleration_proposal(flags, p
 % but without the prediction step.
 
 % Set local variables
+ds = params.state_dim;
 dr = params.rnd_dim;
 do = params.obs_dim;
 Q = params.Q;
@@ -24,7 +25,9 @@ w_mn = zeros(dr, 1);
 w_var = Q;
 
 % Work out where to start
-start_idx = find(min(times>tau)==times);
+start_idx = find(min(times(times>tau))==times);
+
+w_arr = zeros(length(times));
 
 % Loop through time
 for k = start_idx:length(times)
@@ -57,7 +60,14 @@ for k = start_idx:length(times)
         w_var = w_var - K * S * K';
     end
 
+    w_arr(k) = det(w_var);
+    
 end
+
+% figure(2), plot(w_arr);
+
+% w_var = w_var + 0.1*Q;
+w_var = Q;
 
 % Make sure its exactly symmetric (tolerances on mvnrnd are pretty tight)
 w_var = (w_var+w_var')/2;

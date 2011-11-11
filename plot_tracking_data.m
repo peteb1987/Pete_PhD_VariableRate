@@ -3,7 +3,7 @@ set(gcf, 'Position', [screen_size(3)/4 0 screen_size(3)/2 screen_size(4) ] );
 
 hold on;
 
-subplot(6,1,1:3), hold on
+subplot(6,2,1:6), hold on
 
 % Set plot area to contain the track (and the origin)
 x1_max = max(max(interp_state(1,:))+20, 10);
@@ -30,23 +30,28 @@ elseif flags.obs_mod == 2
 end
 
 % Plot bearing and speed
-subplot(6,1,4), hold on
+subplot(6,2,7), hold on
 plot(times, interp_state(3,:), 'b', 'linewidth', 3)
+ylabel('Heading')
 if params.obs_dim == 4
+    subplot(6,2,8), hold on
     plot(times, observ(3,:), 'r');
+    ylabel('Bearing Rate')
 end
-ylabel('bearing')
 
-subplot(6,1,5), hold on
+subplot(6,2,9), hold on
+ylabel('Speed')
 plot(times, interp_state(4,:), 'b', 'linewidth', 3)
 if params.obs_dim == 4
+    subplot(6,2,10), hold on
     plot(times, observ(4,:), 'r');
+    ylabel('Range Rate')
 end
-ylabel('speed')
+
 
 % Plot kernel density estimate
 if exist('filt_jump_kdest','var')
-    subplot(6,1,6), hold on
+    subplot(6,2,[11,12]), hold on
     plot(filt_kd_times, filt_jump_kdest, 'b');
     if flags.gen_data, for tt=1:length(tau), plot([tau(tt),tau(tt)], [0,1]','r'); end, end
 end

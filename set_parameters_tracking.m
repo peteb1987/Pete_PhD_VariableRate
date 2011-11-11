@@ -17,11 +17,10 @@ if flags.dyn_mod == 1
     params.Q = diag([0.01, 10]);            % Covariance for aT, aP
     params.rnd_dim = 2;                     % Random variables dimension
 elseif flags.dyn_mod == 2
-    params.Q = diag([0.01, 1, 1, 1]);      % Covariance for aT, aP, aX, aY
+    params.Q = diag([0.01, 10, 1, 1]);      % Covariance for aT, aP, aX, aY
     params.rnd_dim = 4;                     % Random variables dimension
 elseif flags.dyn_mod == 3
-    params.Q = diag([0.01, 1, (pi/90)^2, 0.01]);      % Covariance for aT, aP, aB, aS
-%     params.Q = diag([0.01, 1, 0, 0.01]);
+    params.Q = diag([0.01, 10, (pi/90)^2, 0.01]);      % Covariance for aT, aP, aB, aS
     params.rnd_dim = 4;                     % Random variables dimension
 end
 if flags.obs_mod == 1
@@ -29,13 +28,13 @@ if flags.obs_mod == 1
         params.C = [1 0 0 0; 0 1 0 0];
         params.R = 10*eye(2);
     else
-        params.R = eye(4);
+        params.R = diag([10, 10, 1, 1]);
     end
 elseif flags.obs_mod == 2
     if params.obs_dim == 2
         params.R = diag([(pi/90)^2, 1]);
     else
-        params.R = diag([(pi/90)^2, 10, (pi/45)^2, 0.1]);
+        params.R = diag([(pi/90)^2, 10, (pi/90)^2, 0.1]);
     end
 end
 
