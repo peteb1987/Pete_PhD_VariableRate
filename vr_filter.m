@@ -84,7 +84,7 @@ for k = 2:K
     
     % Calculate number of children for each particle
     round_weights = max(1/last_Np, exp(last_pts_weights));
-    round_weights(last_pts_weights-max(last_pts_weights)<-200)=0;
+    round_weights(last_pts_weights-max(last_pts_weights)<-2000)=0;
     round_weights = round_weights/sum(round_weights);
     Nchild = systematic_resample(round_weights, params.Np);
 %     Nchild = max(1, floor(last_Np*exp(last_pts_weights)));
@@ -132,30 +132,30 @@ for k = 2:K
                 pts_intmu(jj,1:k-1,:) = last_pts_intmu(ii,:,:);
                 pts_intP(jj,1:k-1,:,:) = last_pts_intP(ii,:,:,:);
                 
-%                 % Run a RM step
-%                 if (flags.app == 2)%%&&(rand<0.25)&&((t-last_tau)>(params.dt*30))
-%                     
-%                     kk = k-1;
-%                     
-%                     % Propose a resample-move step to adjust the last w
-%                     [w_replace, ppsl_prob, rev_ppsl_prob] = tracking_acceleration_proposal(flags, params, last_x, last_tau, last_w, times(1:kk), observ(:,1:kk));
-%                     
-%                     % Calculate likelihoods
-%                     [old_lhood, ~] = tracking_calc_likelihood(flags, params, last_x, last_tau, last_w, times(1:kk), observ(:,1:kk));
-%                     [new_lhood, ppsl_intx] = tracking_calc_likelihood(flags, params, last_x, last_tau, w_replace, times(1:kk), observ(:,1:kk));
-%                     old_accel_prob = log(mvnpdf(last_w', zeros(1,params.rnd_dim), params.Q));
-%                     new_accel_prob = log(mvnpdf(w_replace', zeros(1,params.rnd_dim), params.Q));
-%                     
-%                     % MH acceptance
-%                     acc_prob = (new_lhood+new_accel_prob)-(old_lhood+old_accel_prob)+(rev_ppsl_prob-ppsl_prob);
-%                     if log(rand)<acc_prob
-%                         start_idx = find(min(times(times>last_tau))==times);
-%                         pts_w(jj,pts_Ns(jj),:) = w_replace;
-%                         pts_intx(jj,start_idx:kk,:) = ppsl_intx(1,start_idx:kk,:);
-%                         x = tracking_calc_next_state(flags, last_x, tau-last_tau, w_replace);
-%                     end
-%                     
-%                 end
+                % Run a RM step
+                if (flags.app == 2)%%&&(rand<0.25)&&((t-last_tau)>(params.dt*30))
+                    
+                    kk = k-1;
+                    
+                    % Propose a resample-move step to adjust the last w
+                    [w_replace, ppsl_prob, rev_ppsl_prob] = tracking_acceleration_proposal(flags, params, last_x, last_tau, last_w, times(1:kk), observ(:,1:kk));
+                    
+                    % Calculate likelihoods
+                    [old_lhood, ~] = tracking_calc_likelihood(flags, params, last_x, last_tau, last_w, times(1:kk), observ(:,1:kk));
+                    [new_lhood, ppsl_intx] = tracking_calc_likelihood(flags, params, last_x, last_tau, w_replace, times(1:kk), observ(:,1:kk));
+                    old_accel_prob = log(mvnpdf(last_w', zeros(1,params.rnd_dim), params.Q));
+                    new_accel_prob = log(mvnpdf(w_replace', zeros(1,params.rnd_dim), params.Q));
+                    
+                    % MH acceptance
+                    acc_prob = (new_lhood+new_accel_prob)-(old_lhood+old_accel_prob)+(rev_ppsl_prob-ppsl_prob);
+                    if log(rand)<acc_prob
+                        start_idx = find(min(times(times>last_tau))==times);
+                        pts_w(jj,pts_Ns(jj),:) = w_replace;
+                        pts_intx(jj,start_idx:kk,:) = ppsl_intx(1,start_idx:kk,:);
+                        x = tracking_calc_next_state(flags, last_x, tau-last_tau, w_replace);
+                    end
+                    
+                end
                 
                 % Add new bits
                 pts_weights(jj) = last_pts_weights(ii)-log(Ni);
@@ -186,47 +186,52 @@ for k = 2:K
         
         if non_jumping_kids>0
             
-            % Copy a non-jumping copy of the particle and update weight
-            jj = jj + 1;
-            pts_weights(jj) = log(non_jumping_kids)+last_pts_weights(ii)-log(Ni);
-            pts_Ns(jj) = last_pts_Ns(ii);
-            pts_tau(jj,1:last_MNJ) = last_pts_tau(ii,:);
-            pts_type(jj,1:last_MNJ) = last_pts_type(ii,:);
-            pts_x(jj,1:last_MNJ,:) = last_pts_x(ii,:,:);
-            pts_w(jj,1:last_MNJ,:) = last_pts_w(ii,:,:);
-            pts_mu(jj,1:last_MNJ,:) = last_pts_mu(ii,:,:);
-            pts_P(jj,1:last_MNJ,:,:) = last_pts_P(ii,:,:,:);
-            pts_intx(jj,1:k-1,:) = last_pts_intx(ii,:,:);
-            pts_intmu(jj,1:k-1,:) = last_pts_intmu(ii,:,:);
-            pts_intP(jj,1:k-1,:,:) = last_pts_intP(ii,:,:,:);
-            
-            [pred_lhood, pts_intx(jj,k,:), pts_intmu(jj,k,:), pts_intP(jj,k,:,:)] = interp_and_lhood(flags, params, last_tau, t, last_w, last_x, last_intmu, last_intP, observ(:,k));
-
-%             assert(all(eig(squeeze(pts_intP(jj,k,:,:)))>=-1E-6))
-            
-            % Update weight
-            pts_weights(jj) = pts_weights(jj) + pred_lhood;
-            
-            % Run a RM step
-            if (flags.app == 2)&&(rand<0.05)&&((t-last_tau)>(params.dt*20))
+            for ch = 1:non_jumping_kids
                 
-                kk = k;
+                % Copy a non-jumping copy of the particle and update weight
+                jj = jj + 1;
+%                 pts_weights(jj) = log(non_jumping_kids)+last_pts_weights(ii)-log(Ni);
+                pts_weights(jj) = last_pts_weights(ii)-log(Ni);
+                pts_Ns(jj) = last_pts_Ns(ii);
+                pts_tau(jj,1:last_MNJ) = last_pts_tau(ii,:);
+                pts_type(jj,1:last_MNJ) = last_pts_type(ii,:);
+                pts_x(jj,1:last_MNJ,:) = last_pts_x(ii,:,:);
+                pts_w(jj,1:last_MNJ,:) = last_pts_w(ii,:,:);
+                pts_mu(jj,1:last_MNJ,:) = last_pts_mu(ii,:,:);
+                pts_P(jj,1:last_MNJ,:,:) = last_pts_P(ii,:,:,:);
+                pts_intx(jj,1:k-1,:) = last_pts_intx(ii,:,:);
+                pts_intmu(jj,1:k-1,:) = last_pts_intmu(ii,:,:);
+                pts_intP(jj,1:k-1,:,:) = last_pts_intP(ii,:,:,:);
                 
-                % Propose a resample-move step to adjust the last w
-                [w_replace, ppsl_prob, rev_ppsl_prob] = tracking_acceleration_proposal(flags, params, last_x, last_tau, last_w, times(1:kk), observ(:,1:kk));
+                [pred_lhood, pts_intx(jj,k,:), pts_intmu(jj,k,:), pts_intP(jj,k,:,:)] = interp_and_lhood(flags, params, last_tau, t, last_w, last_x, last_intmu, last_intP, observ(:,k));
                 
-                % Calculate likelihoods
-                [old_lhood, ~] = tracking_calc_likelihood(flags, params, last_x, last_tau, last_w, times(1:kk), observ(:,1:kk));
-                [new_lhood, ppsl_intx] = tracking_calc_likelihood(flags, params, last_x, last_tau, w_replace, times(1:kk), observ(:,1:kk));
-                old_accel_prob = log(mvnpdf(last_w', zeros(1,params.rnd_dim), params.Q));
-                new_accel_prob = log(mvnpdf(w_replace', zeros(1,params.rnd_dim), params.Q));
+                %             assert(all(eig(squeeze(pts_intP(jj,k,:,:)))>=-1E-6))
                 
-                % MH acceptance
-                acc_prob = (new_lhood+new_accel_prob)-(old_lhood+old_accel_prob)+(rev_ppsl_prob-ppsl_prob);
-                if log(rand)<acc_prob
-                    start_idx = find(min(times(times>last_tau))==times);
-                    pts_w(jj,pts_Ns(jj),:) = w_replace;
-                    pts_intx(jj,start_idx:kk,:) = ppsl_intx(1,start_idx:kk,:);
+                % Update weight
+                pts_weights(jj) = pts_weights(jj) + pred_lhood;
+                
+                % Run a RM step
+                if (flags.app == 2)&&(ch>1)&&((t-last_tau)>(params.dt*20))%%&&(rand<0.05)
+                    
+                    kk = k;
+                    
+                    % Propose a resample-move step to adjust the last w
+                    [w_replace, ppsl_prob, rev_ppsl_prob] = tracking_acceleration_proposal(flags, params, last_x, last_tau, last_w, times(1:kk), observ(:,1:kk));
+                    
+                    % Calculate likelihoods
+                    [old_lhood, ~] = tracking_calc_likelihood(flags, params, last_x, last_tau, last_w, times(1:kk), observ(:,1:kk));
+                    [new_lhood, ppsl_intx] = tracking_calc_likelihood(flags, params, last_x, last_tau, w_replace, times(1:kk), observ(:,1:kk));
+                    old_accel_prob = log(mvnpdf(last_w', zeros(1,params.rnd_dim), params.Q));
+                    new_accel_prob = log(mvnpdf(w_replace', zeros(1,params.rnd_dim), params.Q));
+                    
+                    % MH acceptance
+                    acc_prob = (new_lhood+new_accel_prob)-(old_lhood+old_accel_prob)+(rev_ppsl_prob-ppsl_prob);
+                    if log(rand)<acc_prob
+                        start_idx = find(min(times(times>last_tau))==times);
+                        pts_w(jj,pts_Ns(jj),:) = w_replace;
+                        pts_intx(jj,start_idx:kk,:) = ppsl_intx(1,start_idx:kk,:);
+                    end
+                    
                 end
                 
             end

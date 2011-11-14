@@ -14,13 +14,13 @@ params.rate_shape = 5;                  % State time gamma distribution shape pa
 params.rate_scale = 1;                  % State time gamma distribution scale parameter (this is "b", or "theta")
 
 if flags.dyn_mod == 1
-    params.Q = diag([0.01, 10]);            % Covariance for aT, aP
+    params.Q = diag([0.01, sqrt(10)]);            % Covariance for aT, aP
     params.rnd_dim = 2;                     % Random variables dimension
 elseif flags.dyn_mod == 2
-    params.Q = diag([0.01, 10, 1, 1]);      % Covariance for aT, aP, aX, aY
+    params.Q = diag([0.01, sqrt(10), 1, 1]);      % Covariance for aT, aP, aX, aY
     params.rnd_dim = 4;                     % Random variables dimension
 elseif flags.dyn_mod == 3
-    params.Q = diag([0.01, 10, (pi/90)^2, 0.01]);      % Covariance for aT, aP, aB, aS
+    params.Q = diag([0.01, sqrt(10), (pi/90)^2, 0.01]);      % Covariance for aT, aP, aB, aS
     params.rnd_dim = 4;                     % Random variables dimension
 end
 if flags.obs_mod == 1
