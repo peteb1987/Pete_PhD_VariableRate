@@ -8,7 +8,7 @@ params.T = params.dt*params.K;
 
 % Model
 params.state_dim = 4;                   % State dimension
-params.obs_dim = 4;                     % Observation dimension
+params.obs_dim = 2;                     % Observation dimension
 
 params.rate_shape = 5;                  % State time gamma distribution shape parameter (this is "a", or "k")
 params.rate_scale = 1;                  % State time gamma distribution scale parameter (this is "b", or "theta")

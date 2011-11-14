@@ -67,7 +67,7 @@ end
 % figure(2), plot(w_arr);
 
 % w_var = w_var + 0.1*Q;
-w_var = Q;
+% w_var = Q;
 
 % Make sure its exactly symmetric (tolerances on mvnrnd are pretty tight)
 w_var = (w_var+w_var')/2;
