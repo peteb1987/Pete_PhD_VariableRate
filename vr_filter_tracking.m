@@ -30,18 +30,13 @@ MNJ = 2;                                    % MAXIMUM NUMBER OF JUMPS - this is 
 last_pts_weights = log(ones(Np, 1)/Np);             % Particle weights
 last_pts_Ns = ones(Np, 1);                          % Number of states per particle
 last_pts_tau = zeros(Np, MNJ);                      % Particle jump times
-last_pts_type = zeros(Np, MNJ);                     % Particle jump types
 last_pts_intx = zeros(Np, 1, ds);                   % States interpolated at observation times
-last_pts_intmu = zeros(Np, 1, ds);                  % Means interpolated at observation times (for rb case)
-last_pts_intP = zeros(Np, 1, ds, ds);               % Covariances interpolated at observation times (for rb case)
 
 % Initialise first points
-[last_pts_x, last_pts_mu, last_pts_P, last_pts_w] = initialise_state(flags, params, Np, MNJ, observ);
+[last_pts_x, last_pts_w] = initialise_state_tracking(flags, params, Np, MNJ, observ);
 
 % Initialise interpolated variables
 last_pts_intx(:,1,:) = last_pts_x(:,1,:);
-last_pts_intmu(:,1,:) = last_pts_mu(:,1,:);
-last_pts_intP(:,1,:,:) = last_pts_P(:,1,:,:);
 last_t = 0;
 last_Np = Np;
 last_MNJ = MNJ;
@@ -51,14 +46,9 @@ part_sets{1}.Np = last_Np;
 part_sets{1}.pts_weights = last_pts_weights;
 part_sets{1}.pts_Ns = last_pts_Ns;
 part_sets{1}.pts_tau = last_pts_tau;
-part_sets{1}.pts_type = last_pts_type;
 part_sets{1}.pts_x = last_pts_x;
 part_sets{1}.pts_w = last_pts_w;
-part_sets{1}.pts_mu = last_pts_mu;
-part_sets{1}.pts_P = last_pts_P;
 part_sets{1}.pts_intx = last_pts_intx;
-part_sets{1}.pts_intmu = last_pts_intmu;
-part_sets{1}.pts_intP = last_pts_intP;
 
 % Loop through observations
 for k = 2:K
@@ -70,14 +60,9 @@ for k = 2:K
     pts_weights = log(ones(Np, 1)/Np);             % Particle weights
     pts_Ns = ones(Np, 1);                          % Number of states per particle
     pts_tau = zeros(Np, MNJ);                      % Particle jump times
-    pts_type = NaN(Np, MNJ);                       % Particle jump types
     pts_x = zeros(Np, MNJ, ds);                    % Particle states
     pts_w = zeros(Np, MNJ, dr);                    % Random variables
-    pts_mu = zeros(Np, MNJ, ds);                   % Particle means (for rb case)
-    pts_P = zeros(Np, MNJ, ds, ds);                % Particle covariances (for rb case)
     pts_intx = zeros(Np, k, ds);                   % States interpolated at observation times
-    pts_intmu = zeros(Np, k, ds);                  % Means interpolated at observation times (for rb case)
-    pts_intP = zeros(Np, k, ds, ds);               % Covariances interpolated at observation times (for rb case)
     
     % New particle counter
     jj = 0;
@@ -103,17 +88,13 @@ for k = 2:K
         last_x = squeeze(last_pts_x(ii, last_pts_Ns(ii),:));
         last_w = squeeze(last_pts_w(ii, last_pts_Ns(ii),:));
         
-        last_intx = squeeze(last_pts_intx(ii,k-1,:));
-        last_intmu = squeeze(last_pts_intmu(ii,k-1,:));
-        last_intP = squeeze(last_pts_intP(ii,k-1,:,:));
-        
         non_jumping_kids = 0;
         
         % Loop through children
         for ch = 1:Ni
             
             % Sample next jump time to see if one has happened since t-1
-            [tau, type, w, x, mu, P ] = sample_next_state( flags, params, last_t, last_tau, last_x, last_w, last_intmu, last_intP );
+            [tau, w, x ] = sample_next_state_tracking( flags, params, last_t, last_tau, last_x, last_w );
             
             % If a jump has occured, add it to the state and update weight
             if tau < t
@@ -123,17 +104,12 @@ for k = 2:K
                 % Copy old particle bits accross
                 pts_Ns(jj) = last_pts_Ns(ii);
                 pts_tau(jj,1:last_MNJ) = last_pts_tau(ii,:);
-                pts_type(jj,1:last_MNJ) = last_pts_type(ii,:);
                 pts_x(jj,1:last_MNJ,:) = last_pts_x(ii,:,:);
                 pts_w(jj,1:last_MNJ,:) = last_pts_w(ii,:,:);
-                pts_mu(jj,1:last_MNJ,:) = last_pts_mu(ii,:,:);
-                pts_P(jj,1:last_MNJ,:,:) = last_pts_P(ii,:,:,:);
                 pts_intx(jj,1:k-1,:) = last_pts_intx(ii,:,:);
-                pts_intmu(jj,1:k-1,:) = last_pts_intmu(ii,:,:);
-                pts_intP(jj,1:k-1,:,:) = last_pts_intP(ii,:,:,:);
                 
                 % Run a RM step
-                if (flags.app == 2)%%&&(rand<0.25)&&((t-last_tau)>(params.dt*30))
+                if 1%%&&(rand<0.25)&&((t-last_tau)>(params.dt*30))
                     
                     kk = k-1;
                     
@@ -161,13 +137,10 @@ for k = 2:K
                 pts_weights(jj) = last_pts_weights(ii)-log(Ni);
                 pts_Ns(jj) = pts_Ns(jj) + 1;
                 pts_tau(jj,pts_Ns(jj)) = tau;
-                pts_type(jj,pts_Ns(jj)) = type;
                 pts_x(jj,pts_Ns(jj),:) = x;
                 pts_w(jj,pts_Ns(jj),:) = w;
-                pts_mu(jj,pts_Ns(jj),:) = mu;
-                pts_P(jj,pts_Ns(jj),:,:) = P;
                 
-                [pred_lhood, pts_intx(jj,k,:), pts_intmu(jj,k,:), pts_intP(jj,k,:,:)] = interp_and_lhood(flags, params, tau, t, last_w, x, mu, P, observ(:,k));
+                [pred_lhood, pts_intx(jj,k,:)] = interp_and_lhood_tracking(flags, params, tau, t, last_w, x, observ(:,k));
                 
 %                 assert(all(eig(squeeze(pts_intP(jj,k,:,:)))>=-1E-6))
                 
@@ -194,16 +167,11 @@ for k = 2:K
                 pts_weights(jj) = last_pts_weights(ii)-log(Ni);
                 pts_Ns(jj) = last_pts_Ns(ii);
                 pts_tau(jj,1:last_MNJ) = last_pts_tau(ii,:);
-                pts_type(jj,1:last_MNJ) = last_pts_type(ii,:);
                 pts_x(jj,1:last_MNJ,:) = last_pts_x(ii,:,:);
                 pts_w(jj,1:last_MNJ,:) = last_pts_w(ii,:,:);
-                pts_mu(jj,1:last_MNJ,:) = last_pts_mu(ii,:,:);
-                pts_P(jj,1:last_MNJ,:,:) = last_pts_P(ii,:,:,:);
                 pts_intx(jj,1:k-1,:) = last_pts_intx(ii,:,:);
-                pts_intmu(jj,1:k-1,:) = last_pts_intmu(ii,:,:);
-                pts_intP(jj,1:k-1,:,:) = last_pts_intP(ii,:,:,:);
                 
-                [pred_lhood, pts_intx(jj,k,:), pts_intmu(jj,k,:), pts_intP(jj,k,:,:)] = interp_and_lhood(flags, params, last_tau, t, last_w, last_x, last_intmu, last_intP, observ(:,k));
+                [pred_lhood, pts_intx(jj,k,:)] = interp_and_lhood_tracking(flags, params, last_tau, t, last_w, last_x, observ(:,k));
                 
                 %             assert(all(eig(squeeze(pts_intP(jj,k,:,:)))>=-1E-6))
                 
@@ -211,12 +179,22 @@ for k = 2:K
                 pts_weights(jj) = pts_weights(jj) + pred_lhood;
                 
                 % Run a RM step
-                if (flags.app == 2)&&(ch>1)&&((t-last_tau)>(params.dt*20))%%&&(rand<0.05)
+                if (ch>1)%&&((t-last_tau)>(params.dt*20))%%&&(rand<0.05)
                     
                     kk = k;
+
+                    % Propose a resample-move step to adjust the last w
+                    [~, ~, rev_ppsl_prob] = tracking_acceleration_proposal(flags, params, last_x, last_tau, last_w, times(1:kk), observ(:,1:kk));
+                    
+                    % Propose a move in the last jump time
+                    tau_replace = normrnd(last_tau, 0.2/(params.rate_shape*params.rate_scale));
+                    tau_replace = min(tau_replace, t-params.dt);
                     
                     % Propose a resample-move step to adjust the last w
-                    [w_replace, ppsl_prob, rev_ppsl_prob] = tracking_acceleration_proposal(flags, params, last_x, last_tau, last_w, times(1:kk), observ(:,1:kk));
+                    [w_replace, ppsl_prob, ~] = tracking_acceleration_proposal(flags, params, last_x, tau_replace, last_w, times(1:kk), observ(:,1:kk));
+                    
+                    ppsl_prob = ppsl_prob + log(normpdf(tau_replace, last_tau, 0.2/(params.rate_shape*params.rate_scale)));
+                    rev_ppsl_prob = rev_ppsl_prob + log(normpdf(last_tau, last_tau, 0.2/(params.rate_shape*params.rate_scale)));
                     
                     % Calculate likelihoods
                     [old_lhood, ~] = tracking_calc_likelihood(flags, params, last_x, last_tau, last_w, times(1:kk), observ(:,1:kk));
@@ -245,14 +223,9 @@ for k = 2:K
     pts_weights(Np+1:end)=[];
     pts_Ns(Np+1:end)=[];
     pts_tau(Np+1:end,:)=[];
-    pts_type(Np+1:end,:)=[];
     pts_x(Np+1:end,:,:)=[];
     pts_w(Np+1:end,:,:)=[];
-    pts_mu(Np+1:end,:,:)=[];
-    pts_P(Np+1:end,:,:,:)=[];
     pts_intx(Np+1:end,:,:)=[];
-    pts_intmu(Np+1:end,:,:)=[];
-    pts_intP(Np+1:end,:,:,:)=[];
     
     % Normalise weights
     lin_weights = exp(pts_weights-max(pts_weights)); assert(all(isreal(lin_weights)));
@@ -265,27 +238,17 @@ for k = 2:K
     last_pts_weights = pts_weights;
     last_pts_Ns = pts_Ns;
     last_pts_tau = pts_tau;
-    last_pts_type = pts_type;
     last_pts_x = pts_x;
     last_pts_w = pts_w;
-    last_pts_mu = pts_mu;
-    last_pts_P = pts_P;
     last_pts_intx = pts_intx;
-    last_pts_intmu = pts_intmu;
-    last_pts_intP = pts_intP;
     
     part_sets{k}.Np = Np;
     part_sets{k}.pts_weights = pts_weights;
     part_sets{k}.pts_Ns = pts_Ns;
     part_sets{k}.pts_tau = pts_tau;
-    part_sets{k}.pts_type = pts_type;
     part_sets{k}.pts_x = pts_x;
     part_sets{k}.pts_w = pts_w;
-    part_sets{k}.pts_mu = pts_mu;
-    part_sets{k}.pts_P = pts_P;
     part_sets{k}.pts_intx = pts_intx;
-    part_sets{k}.pts_intmu = pts_intmu;
-    part_sets{k}.pts_intP = pts_intP;
     
     % Output
     fprintf('*** Completed frame %d, at time %4.3f, using %d particles.\n', k, t, Np);

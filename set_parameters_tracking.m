@@ -8,7 +8,7 @@ params.T = params.dt*params.K;
 
 % Model
 params.state_dim = 4;                   % State dimension
-params.obs_dim = 2;                     % Observation dimension
+params.obs_dim = 4;                     % Observation dimension
 
 params.rate_shape = 5;                  % State time gamma distribution shape parameter (this is "a", or "k")
 params.rate_scale = 1;                  % State time gamma distribution scale parameter (this is "b", or "theta")
@@ -43,7 +43,7 @@ params.min_speed = 0.5;
 
 
 % Algorithm
-params.Np = 500;            % Target number of filtering particles
+params.Np = 100;            % Target number of filtering particles
 params.S = 100;             % Number of smoothing trajectories
 params.start_var = diag([10, 10, (pi/90)^2, 0.1]);
 params.start_bng = 0;
