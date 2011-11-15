@@ -17,9 +17,9 @@ RandStream.setDefaultStream(s);
 
 % Set flags and parameters
 flags.app = 2;                  % 1 = finance (linear jump diffusion), 2 = tracking (curvilinear dynamics)
-flags.dyn_mod = 3;              % 1 = tangential and perpendicular accelarations only
-% 2 = added x and y noise
-% 3 = added bearing and speed noise
+flags.dyn_mod = 1;              % 1 = tangential and perpendicular accelarations only
+                                % 2 = added x and y noise
+                                % 3 = added bearing and speed noise
 flags.obs_mod = 2;              % 1 = linear gaussian
 % 2 = radar with gaussian noise
 flags.gen_data = true;          % true = generate data. false = load real data

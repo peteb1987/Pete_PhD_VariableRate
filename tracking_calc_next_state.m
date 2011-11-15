@@ -66,6 +66,7 @@ else
 end
 
 new_sdot = new_sdot + aS*dt;
+new_sdot(new_sdot<min_speed) = min_speed;
 new_psi = new_psi + aB*dt;
 
 x(1) = new_x1;
