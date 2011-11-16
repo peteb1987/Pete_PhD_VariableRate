@@ -1,8 +1,8 @@
-function [t_grid, jump_kdest] = jump_kernel_est_tracking(T, pts_tau)
+function [t_grid, jump_kdest] = jump_kernel_est_tracking(T, pts)
 %JUMP_KERNEL_EST Make a kernel density estimate of the jump times from the
 % particle output
 
-Np = size(pts_tau,1);
+Np = length(pts);
 
 % Make a finely spaced time grid
 t_grid = linspace(0,T,1001)';
@@ -11,7 +11,7 @@ t_grid = linspace(0,T,1001)';
 sd = 2*(t_grid(2)-t_grid(1));
 
 % Make a vector list of all the jump times
-jump_list = pts_tau(:);
+jump_list = [pts.tau];
 jump_list(jump_list==0)=[];
 
 % Loop through and make the kd estimate

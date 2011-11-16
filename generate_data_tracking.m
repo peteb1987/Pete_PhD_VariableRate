@@ -21,7 +21,7 @@ end
 % Create arrays
 times = cumsum(dt*ones(params.K,1))-dt;     % Array of times
 state = zeros(ds,Ns);                       % Array of states
-ranvar = zeros(dr,Ns);                         % Array of random variables
+ranvar = zeros(dr,Ns);                      % Array of random variables
 interp_state = zeros(ds,params.K);          % Array of interpolated states
 observ = zeros(do,params.K);                % Array of observations
 

@@ -9,6 +9,8 @@ function [w, ppsl_prob, rev_ppsl_prob] = tracking_acceleration_proposal(flags, p
 % The proposal mechanism uses an unscented transform scheme, akin to a UKF
 % but without the prediction step.
 
+K = length(times);
+
 % Set local variables
 ds = params.state_dim;
 dr = params.rnd_dim;
@@ -27,21 +29,18 @@ w_var = Q;
 % Work out where to start
 start_idx = find(min(times(times>tau))==times);
 
-w_arr = zeros(length(times));
-
 % Loop through time
-for k = start_idx:length(times)
+for k = max(start_idx,K-params.opt_ppsl_window_length):K
     
     % Calculate sigma points
     W = ut_sigmas([w_mn; zeros(do,1)],[w_var zeros(dr,do); zeros(do,dr) R],c);
     Y = zeros(do,N_sigs);
     
-    % Loop through sigma points
-    for ii = 1:N_sigs
-        % Propagate SPs through transition and observation functions
-        u = tracking_calc_next_state(flags, x, times(k)-tau, W(1:dr,ii));
-        Y(:,ii) = tracking_calc_obs_mean(flags, params,u);
-    end
+    % Propagate SPs through transition and observation functions
+    u = tracking_calc_next_state_batch_accel(flags, x, times(k)-tau, W(1:dr,:));
+    Y = tracking_calc_obs_mean(flags, params,u);
+
+    % Add observation noise
     Y = Y + W(dr+1:end,:);
     
     % Calculate observation mean, covariance and cross-covariance
@@ -59,15 +58,8 @@ for k = start_idx:length(times)
         w_mn = w_mn + K * (bsxfun(@minus, observ(:,k), mu));
         w_var = w_var - K * S * K';
     end
-
-    w_arr(k) = det(w_var);
     
 end
-
-% figure(2), plot(w_arr);
-
-% w_var = w_var + 0.1*Q;
-% w_var = Q;
 
 % Make sure its exactly symmetric (tolerances on mvnrnd are pretty tight)
 w_var = (w_var+w_var')/2;
