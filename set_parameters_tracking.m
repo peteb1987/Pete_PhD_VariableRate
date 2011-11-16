@@ -43,7 +43,7 @@ params.min_speed = 0.5;
 
 
 % Algorithm
-params.Np = 25;            % Target number of filtering particles
+params.Np = 50;            % Target number of filtering particles
 params.S = 10;             % Number of smoothing trajectories
 params.start_var = diag([10, 10, (pi/90)^2, 0.1]);
 params.start_bng = 0;
