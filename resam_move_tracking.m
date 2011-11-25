@@ -40,6 +40,7 @@ switch type
             pt.w(:,Ns) = w_replace;
             pt.intx(:,start_idx:k) = ppsl_intx(:,start_idx:k);
             pt.lhood(start_idx:k) = new_lhood(start_idx:k);
+            pt.w_prob(Ns) = new_accel_prob;
         end
         
         
@@ -104,6 +105,8 @@ switch type
             pt.x(:,Ns) = x_replace;
             pt.intx(:,start_idx:k) = ppsl_intx(:,start_idx:k);
             pt.lhood(start_idx:k) = new_lhood(start_idx:k);
+            pt.w_prob(Ns) = new_accel_prob;
+            pt.tau_prob(Ns) = tracking_calc_jump_trans_prob( params, penult_tau, tau_replace );
         end
     
 end

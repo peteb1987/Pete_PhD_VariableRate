@@ -55,6 +55,11 @@ if exist('filt_jump_kdest','var')
     plot(filt_kd_times, filt_jump_kdest, 'b');
     if flags.gen_data, for tt=1:length(tau), plot([tau(tt),tau(tt)], [0,1]','r'); end, end
 end
+if exist('smooth_jump_kdest','var')
+    subplot(6,2,[11,12]), hold on
+    plot(filt_kd_times, smooth_jump_kdest, 'g');
+    if flags.gen_data, for tt=1:length(tau), plot([tau(tt),tau(tt)], [0,1]','r'); end, end
+end
 
 % Draw
 drawnow; shg;

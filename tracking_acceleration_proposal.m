@@ -34,11 +34,10 @@ for k = max(start_idx,K-params.opt_ppsl_window_length):K
     
     % Calculate sigma points
     W = ut_sigmas([w_mn; zeros(do,1)],[w_var zeros(dr,do); zeros(do,dr) R],c);
-    Y = zeros(do,N_sigs);
     
     % Propagate SPs through transition and observation functions
     u = tracking_calc_next_state_batch_accel(flags, x, times(k)-tau, W(1:dr,:));
-    Y = tracking_calc_obs_mean(flags, params,u);
+    Y = tracking_calc_obs_mean(flags, params,u,W);
 
     % Add observation noise
     Y = Y + W(dr+1:end,:);

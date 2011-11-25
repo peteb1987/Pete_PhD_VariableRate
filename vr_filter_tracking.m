@@ -24,7 +24,7 @@ T = times(K);
 assert(size(observ,2)==K);
 
 % Initialise the particle set and weights
-pts = initialise_particles_tracking(flags, params, observ);
+pts = initialise_particles_tracking(flags, params, Np, observ);
 weights = log(ones(Np, 1)/Np);
 
 % Store the initial particles
@@ -83,7 +83,9 @@ for k = 2:K
                 weights(jj) = last_weights(ii)-log(Ni);
                 
                 % Resample move - propose change to accelerations
-                pts(jj) = resam_move_tracking(flags, params, k-1, pts(jj), times, observ, 1);
+                if flags.resam_move
+                    pts(jj) = resam_move_tracking(flags, params, k-1, pts(jj), times, observ, 1);
+                end
                 last_w = pts(jj).w(:,last_Ns);
                 x = tracking_calc_next_state(flags, last_x, tau-last_tau, last_w);
                 
@@ -93,6 +95,8 @@ for k = 2:K
                 pts(jj).tau(Ns) = tau;
                 pts(jj).x(:,Ns) = x;
                 pts(jj).w(:,Ns) = w;
+                pts(jj).tau_prob(Ns,1) = tracking_calc_jump_trans_prob(params, last_tau, tau);
+                pts(jj).w_prob(Ns,1) = log(mvnpdf(w', zeros(1,dr), params.Q));
                 
                 % Interpolate state and calculate likelihood
                 [pred_lhood, pts(jj).intx(:,k)] = interp_and_lhood_tracking(flags, params, tau, t, w, x, observ(:,k));
@@ -132,7 +136,9 @@ for k = 2:K
             if (ch>1)&&(pts(jj).Ns>1)
                 
                     % Run a RM step
-                    pts(jj) = resam_move_tracking( flags, params, k, pts(jj), times, observ, 2 );
+                    if flags.resam_move
+                        pts(jj) = resam_move_tracking( flags, params, k, pts(jj), times, observ, 2 );
+                    end
                 
             end
             

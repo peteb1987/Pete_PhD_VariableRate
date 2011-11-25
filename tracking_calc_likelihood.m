@@ -20,7 +20,7 @@ u = tracking_calc_next_state_batch_time(flags, x, times(start_idx:K)-tau, w);
 interp_x(:,start_idx:K) = u;
 
 % Calculate likelihood
-mu = tracking_calc_obs_mean(flags, params, u);
+mu = tracking_calc_obs_mean(flags, params, u, w);
 lhood(start_idx:K) = log(mvnpdf(observ(:,start_idx:K)', mu', params.R));
 
 end

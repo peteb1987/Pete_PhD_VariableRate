@@ -2,6 +2,11 @@ function [ x ] = tracking_calc_next_state_batch_time( flags, last_x, dt, w )
 %TRACKING_CALC_NEXT_STATE Calculate the next state given the dtrevious one,
 %the resdtective times, and the random variables
 
+if flags.dyn_mod >= 5
+    [ x ] = tracking_calc_next_state_batch_time_3D( flags, last_x, dt, w );
+    return
+end
+
 % This version takes a vector of time differences. Useful multiple 
 % likelihood calculations over time.
 
@@ -23,7 +28,7 @@ aB = 0;
 if flags.dyn_mod == 2
     aX1 = w(3);
     aX2 = w(4);
-elseif flags.dyn_mod == 3
+elseif (flags.dyn_mod == 3)||(flags.dyn_mod == 4)
     aB = w(3);
     aS = w(4);
 end
@@ -53,6 +58,13 @@ else
     new_psi = psi + (aP*dt)/sdot;
 end
 
+if flags.dyn_mod == 4
+    psi = psi + aB;
+    sdot = sdot + aS;
+    new_sdot = new_sdot + aS;
+    new_psi = new_psi + aB;
+end
+
 % Calculate new x1 and x2
 if (aT~=0)&&(aP~=0)
     new_x1 = x1 + ((new_sdot.^2)/SF1).*( aP*sin(new_psi)+2*aT*cos(new_psi)) - ((sdot^2)/SF1)*( aP*sin(psi)+2*aT*cos(psi)) + aX1*dt;
@@ -68,9 +80,11 @@ else
     new_x2 = x2 + ( sdot*dt.*sin(psi) ) + aX2*dt;
 end
 
-new_sdot = new_sdot + aS*dt;
-new_sdot(new_sdot<min_speed) = min_speed;
-new_psi = new_psi + aB*dt;
+if flags.dyn_mod == 3
+    new_sdot = new_sdot + aS*dt;
+    new_sdot(new_sdot<min_speed) = min_speed;
+    new_psi = new_psi + aB*dt;
+end
 
 x(1,:) = new_x1;
 x(2,:) = new_x2;

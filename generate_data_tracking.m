@@ -35,7 +35,7 @@ last_tau = 0;
 % Store first jump values
 state(:, 1) = x;
 ranvar(:, 1) = w;
-mu = tracking_calc_obs_mean(flags, params, x);
+mu = tracking_calc_obs_mean(flags, params, x, w);
 observ(:,1) = mvnrnd(mu', R)';
 interp_state(:,1) = x;
 
@@ -71,7 +71,7 @@ for k=2:params.K
     interp_state(:,k) = x;
     
     % Sample observation
-    mu = tracking_calc_obs_mean(flags, params, x);
+    mu = tracking_calc_obs_mean(flags, params, x, w);
     observ(:,k) = mvnrnd(mu', R)';
     
 end
