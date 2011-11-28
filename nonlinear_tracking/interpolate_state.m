@@ -3,7 +3,7 @@ function [ intx, lhood ] = interpolate_state( flags, params, tau, x, w, times, o
 %recent state and the current accelerations. Also calculate the likelihood.
 
 % Interpolate
-intx = next_state(flags, params, x, w, times-tau);
+intx = next_state(flags, params, x, w, times'-tau);
 
 % Likelihood
 obs_mean = observation_mean(flags, params, intx, w);

@@ -37,7 +37,7 @@ for k = max(start_idx,K-params.opt_ppsl_window_length):K
     W = ut_sigmas([w_mn; zeros(do,1)],[w_var zeros(dr,do); zeros(do,dr) R],c);
     
     % Propagate SPs through transition and observation functions
-    u = next_state(flags, x, W(1:dr,:), times(k)-tau);
+    u = next_state(flags, params, x, W(1:dr,:), times(k)-tau);
     Y = observation_mean(flags, params,u,W);
 
     % Add observation noise

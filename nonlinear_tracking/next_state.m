@@ -38,7 +38,7 @@ old_v = old_x(flags.space_dim+1:end,:);
 % Transform to planar intrinisics
 old_sdot = norm(old_v);
 
-if flags.space_dim == 2    
+if flags.space_dim == 2
     % Calculate 2D bearing
     old_psi = atan(old_v(2)/old_v(1));
     aNc = aN(1,:);
@@ -54,8 +54,12 @@ elseif flags.space_dim == 3
     eb(1,:) =  (et(2,:)*sin(phi)-et(1,:)*et(3,:)*cos(phi))/u;
     eb(2,:) = (-et(1,:)*sin(phi)-et(2,:)*et(3,:)*cos(phi))/u;
     eb(3,:) = cos(phi)*u;
-    en = cross(eb,et);
-    R = [et, en, eb];
+    en = cross2(eb,et);
+    if Ns == 1
+        R = [et, en, eb];
+    else
+        R = cat(3, repmat(et,1,Ns)', en', eb');
+    end
     
     old_psi = 0;
     
@@ -76,19 +80,52 @@ end
 
 % displacement
 SF = 4*aT.^2 + aNc.^2;
-new_u = zeros(flags.space_dim,no_cols);
-if (aT~=0)&&(aNc~=0)
-    new_u(1,:) = ((new_sdot.^2)./SF).*( aNc.*sin(new_psi)+2*aT.*cos(new_psi)) - ((old_sdot^2)./SF)*( aNc.*sin(old_psi)+2*aT.*cos(old_psi));
-    new_u(2,:) = ((new_sdot.^2)./SF).*(-aNc.*cos(new_psi)+2*aT.*sin(new_psi)) - ((old_sdot^2)./SF)*(-aNc.*cos(old_psi)+2*aT.*sin(old_psi));
-elseif (aT==0)&&(aNc~=0)
-    new_u(1,:) = ((new_sdot.^2)./aNc).*( sin(new_psi) - sin(old_psi) );
-    new_u(2,:) = ((new_sdot.^2)./aNc).*(-cos(new_psi) + cos(old_psi) );
-elseif (aT~=0)&&(aNc==0)
-    new_u(1,:) = 0.5*dt.*cos(old_psi).*new_sdot;
-    new_u(2,:) = 0.5*dt.*sin(old_psi).*new_sdot;
-else
-    new_u(1,:) = ( old_sdot*dt.*cos(old_psi) );
-    new_u(2,:) = ( old_sdot*dt.*sin(old_psi) );
+
+if Ns == 1
+    
+    new_u = zeros(flags.space_dim,no_cols);
+    if (aT~=0)&&(aNc~=0)
+        new_u(1,:) = ((new_sdot.^2)./SF).*( aNc.*sin(new_psi)+2*aT.*cos(new_psi)) - ((old_sdot^2)./SF)*( aNc.*sin(old_psi)+2*aT.*cos(old_psi));
+        new_u(2,:) = ((new_sdot.^2)./SF).*(-aNc.*cos(new_psi)+2*aT.*sin(new_psi)) - ((old_sdot^2)./SF)*(-aNc.*cos(old_psi)+2*aT.*sin(old_psi));
+    elseif (aT==0)&&(aNc~=0)
+        new_u(1,:) = ((new_sdot.^2)./aNc).*( sin(new_psi) - sin(old_psi) );
+        new_u(2,:) = ((new_sdot.^2)./aNc).*(-cos(new_psi) + cos(old_psi) );
+    elseif (aT~=0)&&(aNc==0)
+        new_u(1,:) = 0.5*dt.*cos(old_psi).*new_sdot;
+        new_u(2,:) = 0.5*dt.*sin(old_psi).*new_sdot;
+    else
+        new_u(1,:) = ( old_sdot*dt.*cos(old_psi) );
+        new_u(2,:) = ( old_sdot*dt.*sin(old_psi) );
+    end
+    
+elseif Ns>1
+    
+    new_u = zeros(flags.space_dim,no_cols);
+    
+    % Flags for where aT and aN are zero
+    waTz = (aT==0);             % flag for where aT is 0
+    waNz = (aNc==0);             % flag for where aN is 0
+    bnz = ((~waTz)&(~waNz));   % both not zero
+    oaTz = ((waTz)&(~waNz));   % only aT zero
+    oaNz = ((~waTz)&(waNz));   % only aN zero
+    bz = ((waTz)&(waNz));      % both zero
+    
+    % Neither aT nor aN are zero
+    new_u(1,bnz) = ((new_sdot(bnz).^2)./SF(bnz)).*( aNc(bnz).*sin(new_psi(bnz))+2*aT(bnz).*cos(new_psi(bnz))) - ((old_sdot.^2)./SF(bnz)).*( aNc(bnz).*sin(old_psi)+2*aT(bnz).*cos(old_psi));
+    new_u(2,bnz) = ((new_sdot(bnz).^2)./SF(bnz)).*(-aNc(bnz).*cos(new_psi(bnz))+2*aT(bnz).*sin(new_psi(bnz))) - ((old_sdot.^2)./SF(bnz)).*(-aNc(bnz).*cos(old_psi)+2*aT(bnz).*sin(old_psi));
+    
+    % aT is zero but aN isn't
+    new_u(1,oaTz) = ((new_sdot(oaTz).^2)./aNc(oaTz)).*( sin(new_psi(oaTz)) - sin(old_psi) );
+    new_u(2,oaTz) = ((new_sdot(oaTz).^2)./aNc(oaTz)).*(-cos(new_psi(oaTz)) + cos(old_psi) );
+    
+    % aN is zero but aT isn't
+    new_u(1,oaNz) = 0.5*dt*cos(old_psi).*new_sdot(oaNz);
+    new_u(2,oaNz) = 0.5*dt*sin(old_psi).*new_sdot(oaNz);
+    
+    % Both aT and aN are zero
+    new_u(1,bz) = ( old_sdot*dt.*cos(old_psi) );
+    new_u(2,bz) = ( old_sdot*dt.*sin(old_psi) );
+    
 end
 
 % Calculate cartesian in-plane velocity
@@ -100,8 +137,13 @@ if flags.space_dim == 2
     new_r = bsxfun(@plus, new_u, old_r);
     new_v = new_udot;
 elseif flags.space_dim == 3
-    new_r = bsxfun(@plus, R*new_u + aX*dt, old_r);
-    new_v = R*new_udot;
+    if Ns>1
+        new_r = bsxfun(@plus, multiprod(R, new_u', [2,3], 2)' + aX*dt, old_r);
+        new_v = multiprod(R, new_udot', [2,3], 2)';
+    else
+        new_r = bsxfun(@plus, R*new_u + aX*dt, old_r);
+        new_v = R*new_udot;
+    end
 end
 
 % Stack them up
