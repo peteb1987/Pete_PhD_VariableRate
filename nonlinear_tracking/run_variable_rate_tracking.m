@@ -44,17 +44,13 @@ else
 end
 
 % Plot data
-figure(1);
-if flags.dyn_mod>=5
-    plot_tracking_data_3D;
-else
-    plot_tracking_data;
-end
+f1 = figure;
+plot_results( flags, params, f1, true_x, true_tau, times, true_intx, observs, [], [], [] );
 
 %% Filtering
 
 % Call filtering algorithm
-[ filt_part_sets ] = vr_filter_tracking( flags, params, times, observ );
+[ filt_part_sets ] = vr_filter( flags, params, times, observs );
 
 % Calculate jump time kernel density estimate
 [filt_kd_times, filt_jump_kdest] = jump_kernel_est_tracking(times(params.K), filt_part_sets{params.K});
