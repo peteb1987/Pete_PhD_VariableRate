@@ -40,21 +40,21 @@ old_sdot = norm(old_v);
 
 if flags.space_dim == 2
     % Calculate 2D bearing
-    old_psi = atan(old_v(2)/old_v(1));
+    old_psi = atan2(old_v(2), old_v(1));
     aNc = aN(1,:);
     
 elseif flags.space_dim == 3
     % Calculate declination and magnitude of normal acceleration (phi is
     % angle between the vector and a vertical plane.)
-    [phi, aNc] = cart2pol(aN(2,:),-aN(1,:));
+    [phi, aNc] = cart2pol(aN(1,:),aN(2,:));
     
     % Calculate unit vectors for 3D intrinsics at start of sojourn
     et = unit(old_v);
-    eb = zeros(3,Ns); u = sqrt(et(1,:)^2+et(2,:)^2);
-    eb(1,:) =  (et(2,:)*sin(phi)-et(1,:)*et(3,:)*cos(phi))/u;
-    eb(2,:) = (-et(1,:)*sin(phi)-et(2,:)*et(3,:)*cos(phi))/u;
-    eb(3,:) = cos(phi)*u;
-    en = cross2(eb,et);
+    en = zeros(3,Ns); u = sqrt(et(1,:)^2+et(2,:)^2);
+    en(1,:) =  (et(2,:)*sin(phi)-et(1,:)*et(3,:)*cos(phi))/u;
+    en(2,:) = (-et(1,:)*sin(phi)-et(2,:)*et(3,:)*cos(phi))/u;
+    en(3,:) = cos(phi)*u;
+    eb = cross2(et,en);
     if Ns == 1
         R = [et, en, eb];
     else
@@ -129,12 +129,12 @@ elseif Ns>1
 end
 
 % Calculate cartesian in-plane velocity
-new_udot = zeros(3,no_cols);
+new_udot = zeros(flags.space_dim,no_cols);
 [new_udot(1,:), new_udot(2,:)] = pol2cart(new_psi, new_sdot);
 
 % Translate back to original coordinate system
 if flags.space_dim == 2
-    new_r = bsxfun(@plus, new_u, old_r);
+    new_r = bsxfun(@plus, new_u+aX*dt, old_r);
     new_v = new_udot;
 elseif flags.space_dim == 3
     if Ns>1

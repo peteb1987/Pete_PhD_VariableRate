@@ -8,7 +8,11 @@ if nargin == 4
     new_tau = old_tau + gaminv(u, params.rate_shape, params.rate_scale);
 end
 
-prob = log(gampdf(new_tau-old_tau, params.rate_shape, params.rate_scale));
+if ~isempty(new_tau)
+    prob = log(gampdf(new_tau-old_tau, params.rate_shape, params.rate_scale));
+else
+    prob = log(1-gamcdf(old_tau, params.rate_shape, params.rate_scale));
+end
 
 end
 

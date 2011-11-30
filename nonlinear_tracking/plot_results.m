@@ -2,10 +2,8 @@ function plot_results( flags, params, fig, x, tau, times, intx, observs, pts, kd
 %PLOT_TRACKING_RESULTS Plot tracks, observations and optionally overlay
 %particles
 
-K = params.K;
-
 % Select figure
-figure(fig);
+figure(fig); clf;
 
 % Make it big
 screen_size = get(0, 'ScreenSize');
@@ -63,31 +61,31 @@ end
 
 % Plot velocities on separate axes
 subplot(7,2,7), hold on
-plot(times, intx(4,:), 'b', 'linewidth', 3)
+plot(times, intx(flags.space_dim+1,:), 'b', 'linewidth', 3)
 ylabel('x velocity')
 
 subplot(7,2,9), hold on
-plot(times, intx(5,:), 'b', 'linewidth', 3)
+plot(times, intx(flags.space_dim+2,:), 'b', 'linewidth', 3)
 ylabel('y velocity')
 
 if flags.space_dim == 3
     subplot(7,2,11), hold on
-    plot(times, intx(6,:), 'b', 'linewidth', 3)
+    plot(times, intx(flags.space_dim+3,:), 'b', 'linewidth', 3)
     ylabel('z velocity')
 end
 
 if flags.obs_vel
     subplot(7,2,8)
-    plot(times, observs(4,:), 'r')
+    plot(times, observs(flags.space_dim+1,:), 'r')
     title('Bearing Rate')
     
     subplot(7,2,10)
-    plot(times, observs(5,:), 'r')
+    plot(times, observs(flags.space_dim+2,:), 'r')
     title('Elevation Rate')
     
     if flags.space_dim == 3
         subplot(7,2,12)
-        plot(times, observs(6,:), 'r')
+        plot(times, observs(flags.space_dim+3,:), 'r')
         title('Range Rate')
     end
 end
@@ -95,12 +93,15 @@ end
 if ~isempty(pts)
     % Get interpolated states from particles
     pts_intx = cat(3,pts.intx);
+    K = size(pts_intx, 2);
     x1 = squeeze(pts_intx(1,:,:));
     x2 = squeeze(pts_intx(2,:,:));
-    x3 = squeeze(pts_intx(3,:,:));
-    x1dot = squeeze(pts_intx(4,:,:));
-    x2dot = squeeze(pts_intx(5,:,:));
-    x3dot = squeeze(pts_intx(6,:,:));
+    x1dot = squeeze(pts_intx(flags.space_dim+1,:,:));
+    x2dot = squeeze(pts_intx(flags.space_dim+2,:,:));
+    if flags.space_dim == 3
+        x3 = squeeze(pts_intx(3,:,:));
+        x3dot = squeeze(pts_intx(flags.space_dim+3,:,:));
+    end
     
     % Overlay particles
     subplot(7,2,1:6), hold on
@@ -125,7 +126,7 @@ end
 
 % Plot kernel density estimate
 if ~isempty(kd_est)
-    subplot(6,2,[13,14]), hold on
+    subplot(7,2,[13,14]), hold on
     plot(kd_times, kd_est, 'b');
     if flags.gen_data, for tt=1:length(tau), plot([tau(tt),tau(tt)], [0,1]','r'); end, end
 end

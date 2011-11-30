@@ -55,7 +55,10 @@ elseif flags.obs_mod == 2
             end
             mu(6,:) = dot(v, er);
             mu(5,:) = dot(v, etheta)./mu(3,:);
-            mu(4,:) = dot(v, epsi)./(mu(3,:).*sin(mu(2,:)));
+            mu(4,:) = dot(v, epsi)./(mu(3,:).*cos(mu(2,:)));
+            
+            assert(all( abs(mu(4,:))<20 ))
+            assert(all( abs(mu(5,:))<20 ))
 
         end
     else

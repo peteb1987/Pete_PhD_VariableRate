@@ -7,12 +7,14 @@ params.T = params.dt*params.K;          % Time of last observation
 params.min_speed = 0.5;                 % Minimum speed allowed
 
 % Starting point distribution (assumed known by algorithm)
+% start_state is used by the data generation function (i.e. it's part of the model)
+% start_var is used to initiialise particles (i.e. it's part of the algorithm)
 if flags.space_dim == 3
-    params.start_state = [50; 50; 50; 0; 5; 0];
-    params.start_var = diag([10, 10, 10, 0.1, 0.1, 0.1]);
+    params.start_state = [50; 50; 50; 5; 0; 0];
+    params.start_var = diag([10, 10, 10, 1, 1, 1]);
 elseif flags.space_dim == 2
-	params.start_state = [50; 50; 0; 5];
-    params.start_var = diag([10, 10, 0.1, 0.1]);
+	params.start_state = [50; 50; 5; 0];
+    params.start_var = diag([10, 10, 1, 1]);
 else
     error('unhandled option');
 end

@@ -25,7 +25,7 @@ switch type
         
         % Calculate likelihoods
         old_lhood = pt.lhood(start_idx:end);
-        [new_lhood, new_intx] = interpolate_state(flags, params, last_tau, last_x, w_replace, times(start_idx:k), observs(:,start_idx:k));
+        [new_intx, new_lhood] = interpolate_state(flags, params, last_tau, last_x, w_replace, times(start_idx:k), observs(:,start_idx:k));
         
         % Calculate transition (i.e. acceleration) probabilities
         old_accel_prob = log(mvnpdf(last_w', zeros(1,params.rnd_dim), params.Q));
@@ -61,7 +61,7 @@ switch type
         end
         
         % Calculate state at this jump time
-        x_replace = tracking_calc_next_state(flags, penult_x, tau_replace-penult_tau, penult_w);
+        x_replace = next_state(flags, params, penult_x, penult_w, tau_replace-penult_tau);
         
         % Propose a move in the last accelerations
         [w_replace, ppsl_w_prob, ~] = acceleration_proposal(flags, params, tau_replace, x_replace, last_w, times(1:k), observs(:,1:k));
@@ -80,19 +80,23 @@ switch type
         start_idx = min(last_start_idx,replace_start_idx);
         
         % Calculate likelihoods
-        gap_lhood = zeros(size(pt.lhood));
         old_lhood = pt.lhood(start_idx:k);
-        [new_lhood, ppsl_intx] = tracking_calc_likelihood(flags, params, x_replace, tau_replace, w_replace, times(1:k), observs(:,1:k));
+        new_intx = zeros(size(pt.intx));
+        new_lhood = zeros(size(pt.lhood));
+        [new_intx(:,replace_start_idx:k), new_lhood(replace_start_idx:k)] = interpolate_state(flags, params, tau_replace, x_replace, w_replace, times(replace_start_idx:k), observs(:,replace_start_idx:k));
         if replace_start_idx>last_start_idx
-            [gap_lhood(1:replace_start_idx-1), ppsl_intx(:,1:replace_start_idx-1)] = tracking_calc_likelihood(flags, params, penult_x, penult_tau, penult_w, times(1:replace_start_idx-1), observs(:,1:replace_start_idx-1), last_start_idx);
-            new_lhood(last_start_idx:replace_start_idx-1) = gap_lhood(last_start_idx:replace_start_idx-1);
+            [new_intx(:,last_start_idx:replace_start_idx-1), new_lhood(last_start_idx:replace_start_idx-1)] = interpolate_state(flags, params, penult_tau, penult_x, penult_w, times(last_start_idx:replace_start_idx-1), observs(:,last_start_idx:replace_start_idx-1));
         end
         
         % Calculate transition (i.e. acceleration, and jump time) probabilities
         old_accel_prob = log(mvnpdf(last_w', zeros(1,params.rnd_dim), params.Q));
         new_accel_prob = log(mvnpdf(w_replace', zeros(1,params.rnd_dim), params.Q));
-        new_trans_prob = tracking_calc_jump_trans_prob( params, penult_tau, tau_replace ) + tracking_calc_jump_trans_prob( params, tau_replace );
-        old_trans_prob = tracking_calc_jump_trans_prob( params, penult_tau, last_tau ) + tracking_calc_jump_trans_prob( params, last_tau );
+        [~,new_trans1] = sample_jump_time(flags, params, penult_tau, [], tau_replace);
+        [~,new_trans2] = sample_jump_time(flags, params, tau_replace, [], []);
+        new_trans_prob = new_trans1 + new_trans2;
+        [~,old_trans_1] = sample_jump_time(flags, params, penult_tau, [], last_tau);
+        [~,old_trans_2] = sample_jump_time(flags, params, last_tau, [], []);
+        old_trans_prob = old_trans_1 + old_trans_2;
         
         % MH acceptance
         acc_prob = +(sum(new_lhood)+new_accel_prob+new_trans_prob) ...
@@ -103,16 +107,13 @@ switch type
             pt.tau(Ns) = tau_replace;
             pt.w(:,Ns) = w_replace;
             pt.x(:,Ns) = x_replace;
-            pt.intx(:,start_idx:k) = ppsl_intx(:,start_idx:k);
+            pt.intx(:,start_idx:k) = new_intx(:,start_idx:k);
             pt.lhood(start_idx:k) = new_lhood(start_idx:k);
             pt.w_prob(Ns) = new_accel_prob;
-            pt.tau_prob(Ns) = tracking_calc_jump_trans_prob( params, penult_tau, tau_replace );
+            [~, pt.tau_prob(Ns)] = sample_jump_time(flags, params, penult_tau, [], tau_replace);
         end
     
 end
-
-
-
 
 end
 

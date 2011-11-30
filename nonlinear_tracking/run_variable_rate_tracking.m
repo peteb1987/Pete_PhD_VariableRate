@@ -7,7 +7,7 @@ dbstop if error
 % dbstop if warning
 
 % DEFINE RANDOM SEED
-rand_seed = 1;
+rand_seed = 0;
 
 % Set random seed
 s = RandStream('mt19937ar', 'seed', rand_seed);
@@ -53,36 +53,29 @@ plot_results( flags, params, f1, true_x, true_tau, times, true_intx, observs, []
 [ filt_part_sets ] = vr_filter( flags, params, times, observs );
 
 % Calculate jump time kernel density estimate
-[filt_kd_times, filt_jump_kdest] = jump_kernel_est_tracking(times(params.K), filt_part_sets{params.K});
+[filt_kd_times, filt_jump_kdest] = jump_time_kernel_density(times(params.K), filt_part_sets{params.K});
 
 % Plot filtering results
-figure(1);
-if flags.dyn_mod>=5
-    plot_tracking_data_3D;
-    plot_particles_3D
-else
-    plot_tracking_data;
-end
+plot_results( flags, params, f1, true_x, true_tau, times, true_intx, observs, filt_part_sets{params.K}, filt_kd_times, filt_jump_kdest );
 
 % Histogram number of states
 figure(3), hist([filt_part_sets{params.K}.Ns])
 
+% % Movie
+% figure(10)
+% filter_results_movie( flags, params, fmov, true_x, true_tau, times, true_intx, observs, filt_part_sets )
+
 %% Smoothing
 
 % Call MCMC smoothing algorithm
-[ smooth_pts ] = mcmc_vr_smoother_tracking( flags, params, filt_part_sets, times, observ );
+[ smooth_pts ] = mcmc_vr_smoother( flags, params, filt_part_sets, times, observs );
 
 % Calculate jump time kernel density estimate
-[smooth_kd_times, smooth_jump_kdest] = jump_kernel_est_tracking(times(params.K), smooth_pts);
+[smooth_kd_times, smooth_jump_kdest] = jump_time_kernel_density(times(params.K), smooth_pts);
 
 % Plot smoothing results
-figure(2);
-if flags.dyn_mod>=5
-    plot_tracking_data_3D;
-    plot_smooth_particles_3D;
-else
-    plot_smoothing_trajectories;
-end
+f2 = figure(2);
+plot_results( flags, params, f2, true_x, true_tau, times, true_intx, observs, smooth_pts, smooth_kd_times, smooth_jump_kdest );
 
 % Histogram number of states
 figure(4), hist([smooth_pts.Ns])

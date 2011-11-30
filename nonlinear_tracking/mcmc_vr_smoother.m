@@ -1,6 +1,5 @@
-function [ pts ] = mcmc_vr_smoother_tracking( flags, params, filt_part_sets, times, observ )
-%MCMC_VR_SMOOTHER_TRACKING Smoother for variable rate models using MCMC
-%method.
+function [ pts ] = mcmc_vr_smoother( flags, params, filt_part_sets, times, observ )
+%MCMC_VR_SMOOTHER Smoother for variable rate models using MCMC method.
 
 % Set some local variables
 K = params.K; S = params.S; Np = params.Np;
@@ -8,7 +7,7 @@ ds = params.state_dim; dr = params.rnd_dim; do = params.obs_dim;
 
 % Create a cell array for the smoothed particles
 % pts = cell(S,1);
-pts = initialise_particles_tracking(flags, params, S, observ);
+pts = initialise_particles(flags, params, S, observ);
 
 % Loop through smoothing particles
 for ii = 1:S
@@ -62,12 +61,12 @@ for ii = 1:S
         new_stop_t_idx = find_nearest(times, new_pt.tau(new_stop_tau_idx), false);
         
         % Calculate jump transition probabilities
-        new_jump_trans_prob = tracking_calc_jump_trans_prob(params, new_pt.tau(new_start_tau_idx), new_pt.tau(new_stop_tau_idx));
-        old_jump_trans_prob = tracking_calc_jump_trans_prob(params, old_pt.tau(old_start_tau_idx), old_pt.tau(old_stop_tau_idx));
+        [~, new_jump_trans_prob] = sample_jump_time(flags, params, new_pt.tau(new_start_tau_idx), [], new_pt.tau(new_stop_tau_idx));
+        [~, old_jump_trans_prob] = sample_jump_time(flags, params, old_pt.tau(old_start_tau_idx), [], old_pt.tau(old_stop_tau_idx));
         
         % Calculate accelerations and associated probabilities
-        w_new = tracking_calc_accels(flags, new_pt.tau(new_start_tau_idx), new_pt.tau(new_stop_tau_idx), new_pt.x(:,new_start_tau_idx), new_pt.x(:,new_stop_tau_idx));
-        w_old = tracking_calc_accels(flags, old_pt.tau(old_start_tau_idx), old_pt.tau(old_stop_tau_idx), old_pt.x(:,old_start_tau_idx), old_pt.x(:,old_stop_tau_idx));
+        w_new = determine_acceleration(flags, params, new_pt.x(:,new_start_tau_idx), new_pt.x(:,new_stop_tau_idx), new_pt.tau(new_stop_tau_idx)-new_pt.tau(new_start_tau_idx));
+        w_old = determine_acceleration(flags, params, old_pt.x(:,old_start_tau_idx), old_pt.x(:,old_stop_tau_idx), old_pt.tau(old_stop_tau_idx)-old_pt.tau(old_start_tau_idx));
         new_pt.w(:,new_start_tau_idx) = w_new;
         new_accel_prob = log(mvnpdf(w_new', zeros(1,dr), params.Q));
         old_accel_prob = log(mvnpdf(w_old', zeros(1,dr), params.Q));
@@ -75,12 +74,10 @@ for ii = 1:S
         new_pt.w_prob(new_start_tau_idx) = new_accel_prob;
         
         % Calculate bridging likelihoods
-        [new_temp_lhood, new_temp_intx] = tracking_calc_likelihood(flags, params, new_pt.x(:,new_start_tau_idx), new_pt.tau(new_start_tau_idx), w_new, times(1:new_stop_t_idx), observ(:,1:new_stop_t_idx));
-        new_pt.lhood(new_start_t_idx:new_stop_t_idx) = new_temp_lhood(new_start_t_idx:new_stop_t_idx);
-        new_pt.intx(:,new_start_t_idx:new_stop_t_idx) = new_temp_intx(:,new_start_t_idx:new_stop_t_idx);
-        [old_temp_lhood, old_temp_intx] = tracking_calc_likelihood(flags, params, old_pt.x(:,old_start_tau_idx), old_pt.tau(old_start_tau_idx), w_old, times(1:old_stop_t_idx), observ(:,1:old_stop_t_idx));
-        old_pt.lhood(old_start_t_idx:old_stop_t_idx) = old_temp_lhood(old_start_t_idx:old_stop_t_idx);
-        old_pt.intx(:,old_start_t_idx:old_stop_t_idx) = old_temp_intx(:,old_start_t_idx:old_stop_t_idx);
+        [new_pt.intx(:,new_start_t_idx:new_stop_t_idx), new_pt.lhood(new_start_t_idx:new_stop_t_idx)] = ...
+            interpolate_state(flags, params, new_pt.tau(new_start_tau_idx), new_pt.x(:,new_start_tau_idx), w_new, times(new_start_t_idx:new_stop_t_idx), observ(:,new_start_t_idx:new_stop_t_idx));
+        [old_pt.intx(:,old_start_t_idx:old_stop_t_idx), old_pt.lhood(old_start_t_idx:old_stop_t_idx)] = ...
+            interpolate_state(flags, params, old_pt.tau(old_start_tau_idx), old_pt.x(:,old_start_tau_idx), w_old, times(old_start_t_idx:old_stop_t_idx), observ(:,old_start_t_idx:old_stop_t_idx));
         new_bridge_lhood = sum(new_pt.lhood(new_start_t_idx:new_stop_t_idx));
         old_bridge_lhood = sum(old_pt.lhood(old_start_t_idx:old_stop_t_idx));
         
@@ -92,15 +89,14 @@ for ii = 1:S
         
         % Calculate MH acceptance probability
         acc_prob = (new_past_lhood+new_past_trans_prob+new_bridge_lhood+new_accel_prob+new_jump_trans_prob) ...
-            -(old_past_lhood+old_past_trans_prob+old_bridge_lhood+old_accel_prob+old_jump_trans_prob) ...
-            + (rev_ppsl-ppsl);
+                  -(old_past_lhood+old_past_trans_prob+old_bridge_lhood+old_accel_prob+old_jump_trans_prob) ...
+                  +(rev_ppsl-ppsl);
         
         % Test for acceptance
         if log(rand) < acc_prob
             
             % Keep proposed particle
             old_pt = new_pt;
-            disp(k)
             
         end
         

@@ -18,7 +18,7 @@ RandStream.setDefaultStream(s);
 flags.gen_data = true;          % true = generate data. false = load real data
 
 % Tracking model flags
-flags.dyn_mod = 6;              % 1 = tangential and perpendicular accelarations only
+flags.dyn_mod = 2;              % 1 = tangential and perpendicular accelarations only
                                 % 2 = added x and y noise
                                 % 3 = added bearing and speed noise
                                 % 4 = added bearing and speed jumps
@@ -27,7 +27,7 @@ flags.obs_mod = 2;              % 1 = linear gaussian
                                 % 2 = radar with gaussian noise
 
 % Observed velocity?
-flags.obs_vel = true;           % true = observations of position and velocity. false = only position observations
+flags.obs_vel = false;           % true = observations of position and velocity. false = only position observations
 
 % Resample-move?
 flags.resam_move = true;

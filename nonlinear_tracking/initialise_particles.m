@@ -42,7 +42,7 @@ elseif flags.space_dim == 3
         if flags.obs_mod == 1
             v_init = observ(4:6,1);
         elseif flags.obs_mod == 2
-            [v1, v2, v3] = pol2cart(observ(4,1), observ(5,1), observ(6,1));
+            [v1, v2, v3] = sph2cart(observ(4,1), observ(5,1), observ(6,1));
             v_init = [v1; v2; v3];
         end
     else

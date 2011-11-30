@@ -122,6 +122,7 @@ for k = 2:K
             
             % Copy old particle accross
             pts(jj) = last_pts(ii);
+            last_w = pts(jj).w(:,last_Ns);
             
             % Auxiliary weight
             weights(jj) = last_weights(ii)-log(Ni);
