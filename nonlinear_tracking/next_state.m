@@ -50,15 +50,16 @@ elseif flags.space_dim == 3
     
     % Calculate unit vectors for 3D intrinsics at start of sojourn
     et = unit(old_v);
-    en = zeros(3,Ns); u = sqrt(et(1,:)^2+et(2,:)^2);
-    en(1,:) =  (et(2,:)*sin(phi)-et(1,:)*et(3,:)*cos(phi))/u;
-    en(2,:) = (-et(1,:)*sin(phi)-et(2,:)*et(3,:)*cos(phi))/u;
+    et_rep = repmat(et,1,Ns);
+    en = zeros(3,Ns); u = sqrt(et(1)^2+et(2)^2);
+    en(1,:) =  (et(2)*sin(phi)-et(1)*et(3)*cos(phi))/u;
+    en(2,:) = (-et(1)*sin(phi)-et(2)*et(3)*cos(phi))/u;
     en(3,:) = cos(phi)*u;
-    eb = cross2(et,en);
+    eb = cross(et_rep,en);
     if Ns == 1
         R = [et, en, eb];
     else
-        R = cat(3, repmat(et,1,Ns)', en', eb');
+        R = cat(3, et_rep', en', eb');
     end
     
     old_psi = 0;

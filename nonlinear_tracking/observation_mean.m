@@ -41,7 +41,7 @@ elseif flags.obs_mod == 2
         if flags.obs_vel
             % Calculate polar unit vectors
             er = unit(x(1:3,:));
-            epsi = cross2(er, [0;0;1]);
+            epsi = [er(2,:); -er(1,:); zeros(1,Ns)];%cross2(er, [0;0;1]);
             epsi = unit(epsi);
             etheta = cross(epsi, er);
 
