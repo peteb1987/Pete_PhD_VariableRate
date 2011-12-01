@@ -30,8 +30,14 @@ w_var = Q;
 % Work out where to start
 start_idx = find(min(times(times>tau))==times);
 
+% Work out which frames to use
+total_num_frames = K-start_idx+1;
+used_num_frames = min(params.min_num_ppsl_frames,total_num_frames);
+used_num_frames = used_num_frames + round((total_num_frames - used_num_frames)*0.1);
+frame_list = round( (1:used_num_frames)*total_num_frames/used_num_frames ) + start_idx-1;
+
 % Loop through time
-for k = max(start_idx,K-params.opt_ppsl_window_length):K
+for k = frame_list
     
     % Calculate sigma points
     W = ut_sigmas([w_mn; zeros(do,1)],[w_var zeros(dr,do); zeros(do,dr) R],c);

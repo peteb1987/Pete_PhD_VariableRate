@@ -61,10 +61,6 @@ plot_results( flags, params, f1, true_x, true_tau, times, true_intx, observs, fi
 % Histogram number of states
 figure(3), hist([filt_part_sets{params.K}.Ns])
 
-% % Movie
-% fmov = figure(10)
-% filter_results_movie( flags, params, fmov, true_x, true_tau, times, true_intx, observs, filt_part_sets )
-
 %% Smoothing
 
 % Call MCMC smoothing algorithm
@@ -79,3 +75,9 @@ plot_results( flags, params, f2, true_x, true_tau, times, true_intx, observs, sm
 
 % Histogram number of states
 figure(4), hist([smooth_pts.Ns])
+
+%% Movies
+
+% Movie
+fmov = figure(10);
+filter_results_movie( flags, params, fmov, true_x, true_tau, times, true_intx, observs, filt_part_sets );

@@ -47,7 +47,7 @@ params.Np = 50;                         % Target number of filtering particles
 params.S = 50;                          % Number of smoothing trajectories
 params.ppsl_move_time_sd = ...          % Standard deviation for proposal distribution for moving jump times
     0.1*(params.rate_shape*params.rate_scale);
-params.opt_ppsl_window_length = 5;      % Number of frames over which the UKF-approximated OID proposal is constructed
+params.min_num_ppsl_frames = 5;        % Minimum number of frames over which the UKF-approximated OID proposal is constructed
 
 
 
