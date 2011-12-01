@@ -62,7 +62,7 @@ plot_results( flags, params, f1, true_x, true_tau, times, true_intx, observs, fi
 figure(3), hist([filt_part_sets{params.K}.Ns])
 
 % % Movie
-% figure(10)
+% fmov = figure(10)
 % filter_results_movie( flags, params, fmov, true_x, true_tau, times, true_intx, observs, filt_part_sets )
 
 %% Smoothing

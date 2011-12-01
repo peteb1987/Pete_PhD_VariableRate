@@ -45,7 +45,11 @@ dsdot = new_sdot - old_sdot;
 
 % Find accelerations
 aT = dsdot/dt;
-aNc = aT*dpsi/log(new_sdot/old_sdot);
+if abs(aT)>1E-10
+    aNc = aT*dpsi/log(new_sdot/old_sdot);
+else
+    aNc = dpsi*old_sdot/dt;
+end
 
 if flags.space_dim == 2
     aN = aNc;
@@ -64,6 +68,8 @@ w_new = [aT; aN; zeros(sd,1)];
 
 % Work out what the new state would be with this
 x_nonlinonly = next_state(flags, params, old_x, w_new, dt);
+
+assert(all(abs(x_nonlinonly(sd+1:end)-new_x(sd+1:end))<1E-10))
 
 % Find the difference
 dx = new_x(1:sd) - x_nonlinonly(1:sd);

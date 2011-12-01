@@ -81,7 +81,11 @@ if flags.obs_vel
     
     subplot(7,2,10)
     plot(times, observs(flags.space_dim+2,:), 'r')
-    title('Elevation Rate')
+    if flags.space_dim == 3
+        title('Elevation Rate')
+    elseif flags.space_dim == 2
+        title('Range Rate')
+    end
     
     if flags.space_dim == 3
         subplot(7,2,12)

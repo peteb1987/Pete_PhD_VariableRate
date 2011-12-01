@@ -68,11 +68,11 @@ end
 %%% Solve planar differential equation %%%
 
 % speed
-aT = max(aT, min_speed-old_sdot/dt(end));
+aT = max(aT, (min_speed-old_sdot)/dt(end));
 new_sdot = old_sdot + aT*dt;
 
 % bearing
-if aT~=0
+if abs(aT)>1E-10
     new_psi = old_psi + (aNc./aT).*log(new_sdot./old_sdot);
 else
     new_psi = old_psi + (aNc.*dt)./old_sdot;

@@ -22,7 +22,7 @@ elseif flags.obs_mod == 2
         if flags.obs_vel
             % Calculate polar unit vectors
             er = unit(x(1:2,:));
-            etheta = [er(2,:); -er(1,:)];
+            etheta = [-er(2,:); er(1,:)];
             % Velocity - bearing rate and range rage
             if flags.dyn_mod == 1
                 v = x(3:4,:);
@@ -56,9 +56,6 @@ elseif flags.obs_mod == 2
             mu(6,:) = dot(v, er);
             mu(5,:) = dot(v, etheta)./mu(3,:);
             mu(4,:) = dot(v, epsi)./(mu(3,:).*cos(mu(2,:)));
-            
-            assert(all( abs(mu(4,:))<20 ))
-            assert(all( abs(mu(5,:))<20 ))
 
         end
     else
