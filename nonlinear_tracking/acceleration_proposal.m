@@ -50,13 +50,17 @@ for k = frame_list
     Y = Y + W(dr+1:end,:);
     
     % Calculate observation mean, covariance and cross-covariance
-    S  = zeros(do);
-    C  = zeros(dr,do);
     mu = Y*WM;
-    for ii=1:N_sigs
-      S = S + WC(ii) * (Y(:,ii) - mu) * (Y(:,ii) - mu)';
-      C = C + WC(ii) * (W(1:dr,ii) - w_mn) * (Y(:,ii) - mu)';
-    end
+%     S  = zeros(do);
+%     C  = zeros(dr,do);
+%     for ii=1:N_sigs
+%       S = S + WC(ii) * (Y(:,ii) - mu) * (Y(:,ii) - mu)';
+%       C = C + WC(ii) * (W(1:dr,ii) - w_mn) * (Y(:,ii) - mu)';
+%     end
+    Y_diff = bsxfun(@minus, Y, mu);
+    W_diff = bsxfun(@minus, W(1:dr,:), w_mn);
+    S = Y_diff*diag(WC)*Y_diff';
+    C = W_diff*diag(WC)*Y_diff';
     
     % Update recursions
     if times(k)~=tau

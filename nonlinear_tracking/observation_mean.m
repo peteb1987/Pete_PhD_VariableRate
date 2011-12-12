@@ -21,7 +21,7 @@ elseif flags.obs_mod == 2
         [mu(1,:), mu(2,:)] = cart2pol(x(1,:), x(2,:));
         if flags.obs_vel
             % Calculate polar unit vectors
-            er = unit(x(1:2,:));
+            er = unit(x(1:2,:),1);
             etheta = [-er(2,:); er(1,:)];
             % Velocity - bearing rate and range rage
             if flags.dyn_mod == 1
@@ -40,9 +40,9 @@ elseif flags.obs_mod == 2
         [mu(1,:), mu(2,:), mu(3,:)] = cart2sph(x(1,:), x(2,:), x(3,:));
         if flags.obs_vel
             % Calculate polar unit vectors
-            er = unit(x(1:3,:));
+            er = unit(x(1:3,:),1);
             epsi = [er(2,:); -er(1,:); zeros(1,Ns)];%cross2(er, [0;0;1]);
-            epsi = unit(epsi);
+            epsi = unit(epsi,1);
             etheta = cross(epsi, er);
 
             % Velocity - bearing rate, elevation rate and range rage

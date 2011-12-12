@@ -22,8 +22,8 @@ if flags.space_dim == 2
     
 elseif flags.space_dim == 3
     % Find unit vectors
-    et = unit(old_v);
-    eb = unit(cross(old_v, new_v));
+    et = unit(old_v,1);
+    eb = unit(cross(old_v, new_v),1);
     en = cross(eb, et);
     
     R = [et, en, eb];
@@ -56,8 +56,8 @@ if flags.space_dim == 2
     
 elseif flags.space_dim == 3
     % Resolve aN into vertical and horizonal plane components
-    vert_norm = unit(cross(et, [0;0;1]));
-    hoz_norm = unit(cross(vert_norm, et));
+    vert_norm = unit(cross(et, [0;0;1]),1);
+    hoz_norm = unit(cross(vert_norm, et),1);
     aNh = aNc*(en'*vert_norm);
     aNv = aNc*(en'*hoz_norm);
     aN = [aNv; aNh];
