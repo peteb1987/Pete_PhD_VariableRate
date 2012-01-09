@@ -16,7 +16,7 @@ params.x_fb = 0;
 params.x_sd = 0.005;
 
 params.xdot_start = 0;
-params.xdot_jump_rate = 10;
+params.xdot_jump_rate = 0.000000000000001;
 params.xdot_jump_mn = 0;
 params.xdot_jump_sd = 0.0001;
 params.xdot_fb = -0.05;
@@ -31,6 +31,6 @@ params.R = params.obs_sd^2;
 
 % Algorithm
 params.Np = 100;            % Target number of filtering particles
-params.S = 10;             % Number of smoothing trajectories
+params.S = 20;             % Number of smoothing trajectories
 params.x_start_sd = 40;
 params.xdot_start_sd = 40;

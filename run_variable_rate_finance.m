@@ -7,7 +7,7 @@ dbstop if error
 % dbstop if warning
 
 % DEFINE RANDOM SEED
-rand_seed = 1;
+rand_seed = 0;
 
 % Set random seed
 s = RandStream('mt19937ar', 'seed', rand_seed);
@@ -32,8 +32,9 @@ else
     % Load some data
     convert_data_Apr08;
     MAXK = params.K;
-    times = reg_grid(1:MAXK);
-    observ = EURUSD_uniform(1:MAXK); interp_state = observ;
+    offset = 3*MAXK;
+    times = reg_grid(offset+1:offset+MAXK)-reg_grid(offset+1);
+    observ = EURUSD_uniform(offset+1:offset+MAXK); interp_state = observ;
 end
 
 % Plot data

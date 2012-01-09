@@ -102,7 +102,7 @@ for ii = 1:S
             prev_ji = prev_ji - 1;
             prev_jump = tau(prev_ji);
         end
-        if tt>0
+        if k>1
             % Diffuse
             [A, Q] = lti_disc(F,eye(2),C,tt-times(k-1));
             [b_mu, b_P] = kf_predict(b_mu, b_P, inv(A), A\Q/A');

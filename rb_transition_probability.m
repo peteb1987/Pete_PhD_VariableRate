@@ -21,16 +21,20 @@ trans_prob = zeros(size(future_tau,1),1);
 
 % Type 1 jumps
 if ~isempty(next_1_tau)
-    trans_prob = trans_prob + log(exppdf(next_1_tau-prev_1_tau, 1/params.x_jump_rate));
+%     trans_prob = trans_prob + log(exppdf(next_1_tau-prev_1_tau, 1/params.x_jump_rate));
+    trans_prob = trans_prob + log(exppdf(next_1_tau-t, 1/params.x_jump_rate));
 else
-    trans_prob = trans_prob + log(1-expcdf(params.T-prev_1_tau, 1/params.x_jump_rate));
+%     trans_prob = trans_prob + log(1-expcdf(params.T-prev_1_tau, 1/params.x_jump_rate));
+    trans_prob = trans_prob + log(1-expcdf(params.T-t, 1/params.x_jump_rate));
 end
 
 % Type 2 jumps
 if ~isempty(next_2_tau)
-    trans_prob = trans_prob + log(exppdf(next_2_tau-prev_2_tau, 1/params.xdot_jump_rate));
+%     trans_prob = trans_prob + log(exppdf(next_2_tau-prev_2_tau, 1/params.xdot_jump_rate));
+    trans_prob = trans_prob + log(exppdf(next_2_tau-t, 1/params.xdot_jump_rate));
 else
-    trans_prob = trans_prob + log(1-expcdf(params.T-prev_2_tau, 1/params.xdot_jump_rate));
+%     trans_prob = trans_prob + log(1-expcdf(params.T-prev_2_tau, 1/params.xdot_jump_rate));
+    trans_prob = trans_prob + log(1-expcdf(params.T-t, 1/params.xdot_jump_rate));
 end
 
 % Find indexes of next and previous jumps for gluing

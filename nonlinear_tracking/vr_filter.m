@@ -1,4 +1,4 @@
-function [ part_sets ] = vr_filter( flags, params, times, observs )
+function [ part_sets, weight_sets ] = vr_filter( flags, params, times, observs )
 %VR_FILTER Run variable rate particle filter for tracking
 
 % flags is a structure with all the model and algorithm flags
@@ -17,6 +17,7 @@ Np = params.Np;             % Number of particles (this is overwritten in each i
 
 % Create an array to store particle sets for each time frame
 part_sets = cell(params.K, 1);
+weight_sets = cell(params.K, 1);
 
 % Count the obervations
 K = numel(times);
@@ -155,6 +156,7 @@ for k = 2:K
     
     % Store particles
     part_sets{k} = pts;
+    weight_sets{k} = weights;
     
     % Output
     fprintf('*** Completed frame %d, at time %4.3f, using %d particles.\n', k, t, Np);

@@ -2,6 +2,12 @@ function [ intx, lhood ] = interpolate_state( flags, params, tau, x, w, times, o
 %INTERPOLATE_STATE Interpolate state over an array of times, given the most
 %recent state and the current accelerations. Also calculate the likelihood.
 
+if isempty(times)
+    intx = zeros(4,0);
+    lhood = [];
+    return
+end
+
 % Interpolate
 intx = next_state(flags, params, x, w, times'-tau);
 

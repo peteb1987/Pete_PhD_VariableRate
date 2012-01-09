@@ -51,18 +51,19 @@ elseif flags.space_dim == 3
     % Calculate unit vectors for 3D intrinsics at start of sojourn
     et = unit(old_v,1);
     et_rep = repmat(et,1,Ns);
-    en = zeros(3,Ns); u = sqrt(et(1)^2+et(2)^2);
-    en(1,:) =  (et(2)*sin(phi)-et(1)*et(3)*cos(phi))/u;
-    en(2,:) = (-et(1)*sin(phi)-et(2)*et(3)*cos(phi))/u;
-    en(3,:) = cos(phi)*u;
-    eb = cross(et_rep,en);
-%     eb = zeros(3,Ns); 
-%     part1 = (et(1)^2+et(2)^2);
-%     part2 = sqrt(cos(phi)^2-et(3)^2);
-%     eb(1,:) = (-et(1)*et(3)*sin(phi)+et(2)*part2)/part1;
-%     eb(2,:) = (-et(2)*et(3)*sin(phi)-et(1)*part2)/part1;
-%     eb(3,:) = sin(phi);
-%     en = cross(eb,et_rep);
+%     en = zeros(3,Ns); u = sqrt(et(1)^2+et(2)^2);
+%     en(1,:) =  (et(2)*sin(phi)-et(1)*et(3)*cos(phi))/u;
+%     en(2,:) = (-et(1)*sin(phi)-et(2)*et(3)*cos(phi))/u;
+%     en(3,:) = cos(phi)*u;
+%     eb = cross(et_rep,en);
+    phi = 
+    eb = zeros(3,Ns); 
+    part1 = (et(1)^2+et(2)^2);
+    part2 = sqrt(cos(phi)^2-et(3)^2);
+    eb(1,:) = (-et(1)*et(3)*sin(phi)+et(2)*part2)/part1;
+    eb(2,:) = (-et(2)*et(3)*sin(phi)-et(1)*part2)/part1;
+    eb(3,:) = sin(phi);
+    en = cross(eb,et_rep);
     if Ns == 1
         R = [et, en, eb];
     else

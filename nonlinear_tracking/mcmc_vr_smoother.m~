@@ -28,6 +28,11 @@ for ii = 1:S
         
         t = times(k);
         
+        % Calculate backward conditional weights
+        
+        
+        
+        
         % Propose a new past
         jj = unidrnd(Np);
         copy_pt = filt_part_sets{k}(jj);
@@ -61,8 +66,8 @@ for ii = 1:S
         new_stop_t_idx = find_nearest(times, new_pt.tau(new_stop_tau_idx), false);
         
         % Calculate jump transition probabilities
-        [~, new_jump_trans_prob] = sample_jump_time(flags, params, new_pt.tau(new_start_tau_idx), t, new_pt.tau(new_stop_tau_idx));
-        [~, old_jump_trans_prob] = sample_jump_time(flags, params, old_pt.tau(old_start_tau_idx), t, old_pt.tau(old_stop_tau_idx));
+        [~, new_jump_trans_prob] = sample_jump_time(flags, params, new_pt.tau(new_start_tau_idx), [], new_pt.tau(new_stop_tau_idx));
+        [~, old_jump_trans_prob] = sample_jump_time(flags, params, old_pt.tau(old_start_tau_idx), [], old_pt.tau(old_stop_tau_idx));
         
         % Calculate accelerations and associated probabilities
         w_new = determine_acceleration(flags, params, new_pt.x(:,new_start_tau_idx), new_pt.x(:,new_stop_tau_idx), new_pt.tau(new_stop_tau_idx)-new_pt.tau(new_start_tau_idx));
