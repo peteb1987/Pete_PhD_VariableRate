@@ -1,32 +1,37 @@
-function plot_results( flags, params, part_sets, fig )
+function plot_results( flags, params, times, observ, true_tau, true_intx, pts, kd_est, fig )
 %PLOT_RESULTS Plot RBVRPF results
 
-if nargin > 3
+if nargin > 4
     figure(fig); clf;
 else
     fig = figure;
 end
 
+pts_intmu = cat(3, pts.intmu);
+
 subplot(3,1,1), hold on
-plot(times, part_sets{params.K}.pts_intmu(:,:,1)');
+plot(times, squeeze(pts_intmu(1,:,:)));
 ylabel('x');
-plot(times, interp_state(1,:), 'b', times, observ, 'r', 'LineWidth', 2);
+plot(times, observ, 'r', 'LineWidth', 2); 
+if ~isempty(true_intx)
+    plot(times, true_intx(1,:), 'b', 'LineWidth', 2);
+end
 
 subplot(3,1,2), hold on
-plot(times, part_sets{params.K}.pts_intmu(:,:,2)');
+plot(times, squeeze(pts_intmu(2,:,:)));
 ylabel('x-dot');
-if flags.gen_data
-    plot(times, interp_state(2,:), 'b', 'LineWidth', 2);
+if ~isempty(true_intx)
+    plot(times, true_intx(2,:), 'b', 'LineWidth', 2);
 end
 
 subplot(3,1,3), hold on
-plot(filt_kd_times, filt_x_jump_kdest, 'b');
-plot(filt_kd_times, filt_xdot_jump_kdest, 'g');
+plot(kd_est.times, kd_est.jump_1_kd, 'b');
+plot(kd_est.times, kd_est.jump_2_kd, 'g');
 ylabel('jump kd estimate');
 legend('x', 'x-dot');
 if flags.gen_data
-    for tt=1:length(tau)
-        plot([tau(tt),tau(tt)], [0,1]','r');
+    for tt=1:length(true_tau)
+        plot([true_tau(tt),true_tau(tt)], [0,1]','r');
     end
 end
 

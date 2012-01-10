@@ -1,11 +1,18 @@
-function [lhood, intmu, intP] = interp_and_lhood_finance(flags, params, tau, t, mu, P, obs)
+function [lhood, new_mu, new_P] = interp_and_lhood(flags, params, old_mu, old_P, obs, dt, type)
 %INTERP_AND_LHOOD interpolate the state at a given time and calculate the
 %likelihood at this point
 
-% Update Kalman filter to current time
-[A, Q] = lti_disc(params.F,eye(2),params.C,t-tau);
-[p_mu, p_P] = kf_predict(mu, P, A, Q);
-[intmu, intP, ~, ~, ~, lhood] = kf_update(p_mu, p_P, obs', params.H, params.R);
+% Calculate covariance matrix
+[A, Q] = lti_disc(params.F,eye(2),params.C,dt);
+if type == 1
+    Q = Q + [params.x_jump_sd^2 0; 0 0];
+elseif type == 2
+    Q = Q + [0 0; 0 params.xdot_jump_sd^2];
+end
+
+% Update Kalman filter
+[p_mu, p_P] = kf_predict(old_mu, old_P, A, Q);
+[new_mu, new_P, ~, ~, ~, lhood] = kf_update(p_mu, p_P, obs', params.H, params.R);
 lhood = log(lhood);
 
 end
