@@ -3,7 +3,7 @@ function [lhood, new_mu, new_P] = interp_and_lhood(flags, params, old_mu, old_P,
 %likelihood at this point
 
 % Calculate covariance matrix
-[A, Q] = lti_disc(params.F,eye(2),params.C,dt);
+[A, Q] = lti_disc(params.F,params.L,params.C,dt);
 if type == 1
     Q = Q + [params.x_jump_sd^2 0; 0 0];
 elseif type == 2

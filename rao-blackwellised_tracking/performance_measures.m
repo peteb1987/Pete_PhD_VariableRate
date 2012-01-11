@@ -1,26 +1,35 @@
-function [ mNs, mospa, rmse ] = performance_measures( pts, true_tau, true_intx )
+function [ mNs, mospa, rmse, rmse_over_time ] = performance_measures( pts, times, true_tau, true_intx )
 %PERFORMANCE_MEASURES Calculates various performance measures for RBVRPF/S
 %output
 
-% Count particles
-Np = length(pts.pts_Ns);
+mospa = [];
+rmse = [];
+rmse_over_time = [];
 
-% Calculate mean OSPA between particle jump sequences and real sequence
-ospas = zeros(Np,1);
-for ii = 1:Np
-    ospas(ii) = OSPA(true_tau, pts.pts_tau(ii, 1:pts.pts_Ns(ii)), 1, 0.01);
-end
-mospa = mean(ospas);
+% Count particles
+Np = length(pts);
 
 % Calculate mean number of jumps
-mNs = mean (pts.pts_Ns);
+mNs = mean(cat(1,pts.Ns));
+
+% Calculate mean OSPA between particle jump sequences and real sequence
+if ~isempty(true_tau)
+    ospas = zeros(Np,1);
+    for ii = 1:Np
+        ospas(ii) = OSPA(true_tau, pts(ii).tau(1:pts(ii).Ns), 1, 0.01);
+    end
+    mospa = mean(ospas);
+end
 
 % Calculate price RMSE
-error = abs(bsxfun(@minus, true_intx(1,:), squeeze(pts.pts_intmu(:,1,:))));
-rmse_over_time = sqrt(mean(error.^2, 1));
-rmse = sqrt(mean(error(:).^2));
+if ~isempty(true_intx)
+    intmu = cat(3, pts.intmu);
+    error = abs(bsxfun(@minus, true_intx(1,:), squeeze(intmu(1,:,:))'));
+    rmse_over_time = sqrt(mean(error.^2, 1));
+    rmse = sqrt(mean(error(:).^2));
+end
 
-figure, plot(rmse_over_time)
+% figure, plot(times, rmse_over_time)
 
 end
 

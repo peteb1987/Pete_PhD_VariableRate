@@ -29,6 +29,10 @@ last_pts = pts;
 last_weights = weights;
 last_Np = Np;
 
+% Store initial particles
+part_sets{1} = pts;
+weight_sets{1} = weights;
+
 % Loop through observations
 for k = 2:K
     

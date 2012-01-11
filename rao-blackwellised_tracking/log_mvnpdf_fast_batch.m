@@ -13,7 +13,7 @@ function y = log_mvnpdf_fast_batch(X, Mu, Sigma)
 [d,n] = size(X);
 
 % Center data
-X0 = X - Mu;
+X0 = bsxfun(@minus, X, Mu);
 
 % Create array of standardized data, and vector of log(sqrt(det(Sigma)))
 xRinv = zeros(d,n,superiorfloat(X0,Sigma));

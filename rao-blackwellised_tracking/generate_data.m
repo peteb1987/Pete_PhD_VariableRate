@@ -6,6 +6,7 @@ function [state_tau, observ, times, interp_x] = generate_data( params )
 dt = params.dt;
 F = params.F;
 C = params.C;
+L = params.L;
 R = params.R;
 
 % Generate x jump times
@@ -57,7 +58,7 @@ for k=1:params.K
     while jump_times(ti) < t
         
         % Diffusion
-        [A, Q] = lti_disc(F,eye(2),C,(jump_times(ti)-interm_t));
+        [A, Q] = lti_disc(F,L,C,(jump_times(ti)-interm_t));
         interm_state = mvnrnd(A*interm_state, Q)';
         
         % Jump
@@ -69,7 +70,7 @@ for k=1:params.K
     end
     
     %Sample up to the next time point
-    [A, Q] = lti_disc(F,eye(2),C,t-interm_t);
+    [A, Q] = lti_disc(F,L,C,t-interm_t);
     state(:,k) = mvnrnd(A*interm_state, Q)';
     
     % Sample observation

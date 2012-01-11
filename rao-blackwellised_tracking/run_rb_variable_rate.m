@@ -7,7 +7,7 @@ dbstop if error
 % dbstop if warning
 
 % DEFINE RANDOM SEED
-rand_seed = 0;
+rand_seed = 1;
 
 % Set random seed
 s = RandStream('mt19937ar', 'seed', rand_seed);
@@ -34,11 +34,15 @@ else
     MAXK = params.K;
     offset = 0*MAXK;
     times = reg_grid(offset+1:offset+MAXK)-reg_grid(offset+1);
-    observ = EURUSD_uniform(offset+1:offset+MAXK); interp_state = observ;
+    observ = EURUSD_uniform(offset+1:offset+MAXK);
+    interp_state = [];
+    tau = [];
 end
 
 % Plot data
-figure(1), plot(times, interp_state(1,:), 'b', times, observ, 'r'); drawnow;
+fig = figure(1);
+plot_results(flags, params, times, observ, tau, interp_state, [], [], fig);
+% plot(times, interp_state(1,:), 'b', times, observ, 'r'); drawnow;
 
 %% Filtering
 
@@ -64,8 +68,33 @@ figure(3), hist([filt_part_sets{params.K}.Ns])
 [smooth_kd_est] = jump_kernel_est(length(smooth_pts), times(params.K), cat(2,smooth_pts.tau), cat(2,smooth_pts.type));
 
 % Plot filtering results
-f = figure(2);
+f = figure(4);
 plot_results(flags, params, times, observ, tau, interp_state, smooth_pts, smooth_kd_est, f);
 
 % Histogram number of states
-figure(3), hist([smooth_pts.Ns])
+figure(5), hist([smooth_pts.Ns])
+
+%% Evaluation
+
+% Create an array of filtering particles
+[ filt_pts ] = create_filter_set( params.Np, filt_part_sets, filt_weight_sets );
+kiti_pts = kalman_smooth_pts(flags, params, times, filt_part_sets{end});
+
+% Errors
+[filt_mNs, filt_mospa, filt_rmse, filt_rmse_over_time] = performance_measures(filt_pts, times, tau, interp_state);
+[kiti_mNs, kiti_mospa, kiti_rmse, kiti_rmse_over_time] = performance_measures(kiti_pts, times, tau, interp_state);
+[VRPS_mNs, VRPS_mospa, VRPS_rmse, VRPS_rmse_over_time] = performance_measures(smooth_pts, times, tau, interp_state);
+if ~isempty(interp_state)
+    figure, hold on
+    plot(times, filt_rmse_over_time, 'r')
+    plot(times, kiti_rmse_over_time, 'g')
+    plot(times, VRPS_rmse_over_time, 'b')
+    figure, bar([filt_rmse, kiti_rmse, VRPS_rmse]);
+end
+
+% Unique particles
+kiti_UP = count_unique_particles(times, filt_part_sets{end});
+VRPS_UP = count_unique_particles(times, smooth_pts);
+figure, hold on
+plot(times, kiti_UP, 'g');
+plot(times, VRPS_UP, 'b');

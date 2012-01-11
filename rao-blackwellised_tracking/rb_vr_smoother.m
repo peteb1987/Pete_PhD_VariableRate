@@ -5,7 +5,7 @@ function [ smooth_pts] = rb_vr_smoother( flags, params, times, observ, filt_part
 % Set local variables for parameters
 K = params.K; S = params.S;
 ds = params.state_dim; do = params.obs_dim;
-F = params.F; C = params.C; H = params.H; R = params.R;
+F = params.F; C = params.C; H = params.H; R = params.R; L = params.L;
 
 % Resample S particles from final filtering distribution
 Nchild = systematic_resample(exp(filt_weight_sets{K}), S);
@@ -60,7 +60,7 @@ for ii = 1:S
         next_b_P = squeeze(back_intP(:,:,k+1));
         
         % Run backwards filter prediction
-        [A, Q] = lti_disc(F,eye(2),C,next_t-t);
+        [A, Q] = lti_disc(F,L,C,next_t-t);
         if (prev_jump>t)&&(pt.type(prev_ji)==1)
             Q = Q + [params.x_start_sd^2 0; 0 0];
         elseif (prev_jump>t)&&(pt.type(prev_ji)==2)
@@ -72,23 +72,19 @@ for ii = 1:S
         % Store
         back_intmu(:,k) = b_mu';
         back_intP(:,:,k) = (b_P+b_P')/2;
+
+        % Fetch forward KF results
+        f_mu = cell2mat(arrayfun(@(x) {x.intmu(:,k)'}, filt_part_sets{k}))';
+        f_P = cell2mat(permute(arrayfun(@(x) {x.intP(:,:,k)}, filt_part_sets{k}), [2 3 1]));
         
         % Construct weights
-        cond_weights = zeros(Np,1);
-        for jj = 1:Np
-            
-            % Fetch forward KF results
-            f_mu = filt_part_sets{k}(jj).intmu(:,k);
-            f_P = filt_part_sets{k}(jj).intP(:,:,k);
-            
-            % Linear part
-            cond_weights(jj) = cond_weights(jj) + log(mvnpdf(f_mu', b_mu', f_P+b_P));
-            
-            % Nonlinear part not required because we're using exponentially
-            % distributed jump times, so there is no dependence on the
-            % past.
-            
-        end
+        sum_P = bsxfun(@plus, f_P, b_P);
+        linear_weights = log_mvnpdf_fast_batch(f_mu, b_mu, sum_P);
+        cond_weights = filt_weight_sets{k} + linear_weights;
+        
+        % Nonlinear weights not required because we're using exponentially
+        % distributed jump times, so there is no dependence on the
+        % past.
         
         % Sample
         ind = randsample(length(cond_weights), 1, true, exp(cond_weights));
@@ -123,7 +119,7 @@ for ii = 1:S
         t = times(k);
         
         % Create transition matrices
-        [A, Q] = lti_disc(F, eye(2), C, t-last_t);
+        [A, Q] = lti_disc(F, L, C, t-last_t);
         
         % See if a jump happened
         if (ji<length(pt.tau))&&(t>pt.tau(ji))
@@ -134,21 +130,28 @@ for ii = 1:S
             end
             ji = ji + 1;
         end
-                
-        % Store
-        A_arr(:,:,k-1) = A;
-        Q_arr(:,:,k-1) = Q;
-        mu_arr(:,k) = last_mu;
-        P_arr(:,:,k) = last_P;
         
         % Kalman Filter
         [pred_m, pred_P] = kf_predict(last_mu, last_P, A, Q);
-        [last_mu, last_P] = kf_update(pred_m, pred_P, observ(:,k)', H, R);
-
+        [mu, P] = kf_update(pred_m, pred_P, observ(:,k)', H, R);
+        
+        % Store
+        A_arr(:,:,k-1) = A;
+        Q_arr(:,:,k-1) = Q;
+        mu_arr(:,k-1) = last_mu;
+        P_arr(:,:,k-1) = last_P;
+        
         last_t = t;
+        last_mu = mu;
+        last_P = P;
         
     end
     
+    % Store last point
+    mu_arr(:,K) = mu;
+    P_arr(:,:,K) = P;
+    
+    % RTS smooth
     [intmu, intP] = rts_smooth(mu_arr, P_arr, A_arr, Q_arr);
     
     smooth_pts(ii).Ns = pt.Ns;
