@@ -102,6 +102,14 @@ for ii = 1:S
         
     end
     
+    % Cut off the end jump
+    old_pt.Ns = old_pt.Ns - 1;
+    old_pt.tau(end) = [];
+    old_pt.x(:,end) = [];
+    old_pt.w(:,end) = [];
+    old_pt.w_prob(end) = [];
+    old_pt.tau_prob(end) = [];
+    
     % Store the particle
     pts(ii) = old_pt;
     

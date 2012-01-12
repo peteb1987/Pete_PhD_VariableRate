@@ -80,4 +80,6 @@ end
 all_tau(end)=[];
 all_x(:,end) = [];
 
+all_tau = all_tau';
+
 end
