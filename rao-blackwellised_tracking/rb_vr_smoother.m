@@ -33,7 +33,7 @@ for ii = 1:S
     
     pt = smooth_pts(ii);
     
-    % Get trajectory from the array - append an extra jump just after the data finishes
+    % Append an extra jump just after the data finishes
     pt.Ns = pt.Ns + 1;
     pt.tau = [pt.tau, params.T];
     pt.type = [pt.type, 0];
@@ -62,15 +62,15 @@ for ii = 1:S
         % Run backwards filter prediction
         [A, Q] = lti_disc(F,L,C,next_t-t);
         if (prev_jump>t)&&(pt.type(prev_ji)==1)
-            Q = Q + [params.x_start_sd^2 0; 0 0];
+            Q = Q + [params.x_jump_sd^2 0; 0 0];
         elseif (prev_jump>t)&&(pt.type(prev_ji)==2)
-            Q = Q + [0 0; 0 params.xdot_start_sd^2];
+            Q = Q + [0 0; 0 params.xdot_jump_sd^2];
         end
         [pred_b_mu, pred_b_P] = kf_predict(next_b_mu, next_b_P, inv(A), A\Q/A');
         [b_mu, b_P] = kf_update(pred_b_mu, pred_b_P, observ(:,k)', H, R);
         
         % Store
-        back_intmu(:,k) = b_mu';
+        back_intmu(:,k) = b_mu;
         back_intP(:,:,k) = (b_P+b_P')/2;
 
         % Fetch forward KF results
@@ -78,8 +78,8 @@ for ii = 1:S
         f_P = cell2mat(permute(arrayfun(@(x) {x.intP(:,:,k)}, filt_part_sets{k}), [2 3 1]));
         
         % Construct weights
-        sum_P = bsxfun(@plus, f_P, b_P);
-        linear_weights = log_mvnpdf_fast_batch(f_mu, b_mu, sum_P);
+        sum_P = bsxfun(@plus, f_P, pred_b_P);
+        linear_weights = log_mvnpdf_fast_batch(f_mu, pred_b_mu, sum_P);
         cond_weights = filt_weight_sets{k} + linear_weights;
         
         % Nonlinear weights not required because we're using exponentially
@@ -97,7 +97,7 @@ for ii = 1:S
         pt.tau = [filt_part_sets{k}(ind).tau(1:stop_past_ji), pt.tau(next_ji:end)];
         pt.type = [filt_part_sets{k}(ind).type(1:stop_past_ji), pt.type(next_ji:end)];
         pt.intmu = [filt_part_sets{k}(ind).intmu(:,1:k-1), pt.intmu(:,k:end)];
-        pt.P = cat(3, filt_part_sets{k}(ind).intP(:,:,1:k-1), pt.intP(:,:,k:end));
+        pt.intP = cat(3, filt_part_sets{k}(ind).intP(:,:,1:k-1), pt.intP(:,:,k:end));
         pt.Ns = length(pt.tau);
         
     end

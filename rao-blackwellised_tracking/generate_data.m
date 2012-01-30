@@ -1,4 +1,4 @@
-function [state_tau, observ, times, interp_x] = generate_data( params )
+function [state_tau, state_type, observ, times, interp_x] = generate_data( params )
 %GENERATE_DATA_FINANCE Generate jump diffusion finance data
 
 % This version uses a regular time grid.
@@ -11,33 +11,38 @@ R = params.R;
 
 % Generate x jump times
 x_jump_times = 0;
+x_jump_types = 0;
 x_jump_mags = [0 0];
 num_x_jumps = 0;
 last_x_jump = 0;
 while (num_x_jumps==0)||(x_jump_times(num_x_jumps)<params.T)
     num_x_jumps = num_x_jumps + 1;
     x_jump_times(num_x_jumps,1) = last_x_jump + rande(1/params.x_jump_rate);
+    x_jump_types(num_x_jumps,1) = 1;
     x_jump_mags(num_x_jumps,:) = [normrnd(params.x_jump_mn, params.x_jump_sd), 0];
     last_x_jump = x_jump_times(num_x_jumps);
 end
 
 % Generate xdot jump times
 xdot_jump_times = 0;
+xdot_jump_types = 0;
 xdot_jump_mags = [0 0];
 num_xdot_jumps = 0;
 last_xdot_jump = 0;
 while (num_xdot_jumps==0)||(xdot_jump_times(num_xdot_jumps)<params.T)
     num_xdot_jumps = num_xdot_jumps + 1;
     xdot_jump_times(num_xdot_jumps,1) = last_xdot_jump + rande(1/params.xdot_jump_rate);
+    xdot_jump_types(num_xdot_jumps,1) = 2;
     xdot_jump_mags(num_xdot_jumps,:) = [0 normrnd(params.xdot_jump_mn, params.xdot_jump_sd)];
     last_xdot_jump = xdot_jump_times(num_xdot_jumps);
 end
 
 % Combine the lists
-temp = [x_jump_times x_jump_mags; xdot_jump_times xdot_jump_mags];
+temp = [x_jump_times x_jump_types x_jump_mags; xdot_jump_times xdot_jump_types xdot_jump_mags];
 temp = sortrows(temp, 1);
 jump_times = temp(:,1);
-jump_mags = temp(:,2:3);
+jump_types = temp(:,2);
+jump_mags = temp(:,3:4);
 
 % Create a state vector array and observation vector array
 times = cumsum(dt*ones(params.K,1))-dt;
@@ -83,9 +88,11 @@ for k=1:params.K
 end
 
 % Remove states after the end of time
+jump_types(jump_times>params.T)=[];
 jump_times(jump_times>params.T)=[];
 
 state_tau = [0 jump_times'];
+state_type = [0 jump_types'];
 interp_x = state;
 times = (0:params.K-1)*dt;
 

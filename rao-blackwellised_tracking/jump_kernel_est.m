@@ -6,7 +6,7 @@ function [kd_est] = jump_kernel_est(Np, T, pts_tau, pts_type)
 t_grid = linspace(0,T,1001)';
 
 % Set the standard deviation equal to the spacing
-sd = 2*(t_grid(2)-t_grid(1));
+sd = 1*(t_grid(2)-t_grid(1));
 
 % Make a vector list of all the jump times
 jump_list = pts_tau(:);

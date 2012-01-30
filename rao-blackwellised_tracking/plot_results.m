@@ -1,4 +1,4 @@
-function plot_results( flags, params, times, observ, true_tau, true_intx, pts, kd_est, fig )
+function plot_results( flags, params, times, observ, true_tau, true_type, true_intx, pts, kd_est, fig )
 %PLOT_RESULTS Plot RBVRPF results
 
 if nargin > 4
@@ -9,6 +9,7 @@ end
 
 if ~isempty(pts)
     pts_intmu = cat(3, pts.intmu);
+    pts_intP = cat(4, pts.intP);
 end
 
 subplot(3,1,1), hold on
@@ -24,6 +25,8 @@ end
 subplot(3,1,2), hold on
 if ~isempty(pts)
     plot(times, squeeze(pts_intmu(2,:,:)));
+    plot(times, squeeze(pts_intmu(2,:,:)) + 2* sqrt(squeeze(pts_intP(2,2,:,:))), '-.');
+    plot(times, squeeze(pts_intmu(2,:,:)) - 2* sqrt(squeeze(pts_intP(2,2,:,:))), '-.');
 end
 ylabel('x-dot');
 if ~isempty(true_intx)
@@ -39,7 +42,11 @@ end
 ylabel('jump kd estimate');
 if flags.gen_data
     for tt=1:length(true_tau)
-        plot([true_tau(tt),true_tau(tt)], [0,1]','r');
+        if true_type(tt) == 1
+            plot([true_tau(tt),true_tau(tt)], [0,2]','k');
+        elseif true_type(tt) == 2
+            plot([true_tau(tt),true_tau(tt)], [0,2]','r');
+        end
     end
 end
 

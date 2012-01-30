@@ -23,7 +23,7 @@ for ii = 1:Np
         [A, Q] = lti_disc(F, L, C, t-last_t);
         
         % See if a jump happened
-        if (ji<length(pts(ii).tau))&&(t>pts(ii).tau(ji))
+        if (ji<=length(pts(ii).tau))&&(t>pts(ii).tau(ji))
             if pts(ii).type(ji)==1
                 Q = Q + [params.x_jump_sd^2, 0; 0, 0];
             elseif pts(ii).type(ji)==2
