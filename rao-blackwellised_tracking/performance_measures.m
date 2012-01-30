@@ -1,25 +1,16 @@
-function [ mNs, mospa, mean_rmse, MAP_rmse ] = performance_measures( params, pts, times, true_tau, true_intx )
+function [ mNs, mospa, mean_rmse, MAP_rmse ] = performance_measures( params, pts, times, observs, true_tau, true_intx )
 %PERFORMANCE_MEASURES Calculates various performance measures for RBVRPF/S
 %output
 
 mospa = [];
-rmse = [];
-rmse_over_time = [];
+mean_rmse = [];
+MAP_rmse = [];
 
 % Count particles
 Np = length(pts);
 
 % Calculate mean number of jumps
 mNs = mean(cat(1,pts.Ns));
-
-% Calculate mean OSPA between particle jump sequences and real sequence
-if ~isempty(true_tau)
-    ospas = zeros(Np,1);
-    for ii = 1:Np
-        ospas(ii) = OSPA(true_tau, pts(ii).tau(1:pts(ii).Ns), 1, 0.01);
-    end
-    mospa = mean(ospas);
-end
 
 % Calculate MMSE estimate RMSE
 if ~isempty(true_intx)
@@ -32,15 +23,21 @@ if ~isempty(true_intx)
     mean_rmse.trend = sqrt(mean(trend_error(:).^2));
 end
 
+MAP_pt = pick_max_particle(params, pts, times, observs);
+
 % Calculate MAP estimate RMSE
 if ~isempty(true_intx)
-    MAP_pt = pick_max_particle(params, pts);
     MAP_value_error = abs(bsxfun(@minus, true_intx(1,:), MAP_pt.intmu(1,:)));
     MAP_rmse.value_over_time = sqrt(mean(MAP_value_error.^2, 1));
     MAP_rmse.value = sqrt(mean(MAP_value_error(:).^2));
     MAP_trend_error = abs(bsxfun(@minus, true_intx(2,:), MAP_pt.intmu(2,:)));
     MAP_rmse.trend_over_time = sqrt(mean(MAP_trend_error.^2, 1));
     MAP_rmse.trend = sqrt(mean(MAP_trend_error(:).^2));
+end
+
+% Calculate MAP OSPA between particle jump sequences and real sequence
+if ~isempty(true_tau)
+    mospa = OSPA(true_tau, MAP_pt.tau(1:MAP_pt.Ns), 1, 0.01);
 end
 
 end

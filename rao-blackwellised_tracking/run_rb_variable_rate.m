@@ -16,8 +16,7 @@ RandStream.setDefaultStream(s);
 %% Flags and Parameters
 
 % Set flags and parameters
-flags.app = 1;                  % 1 = finance (linear jump diffusion), 2 = tracking (curvilinear dynamics)
-flags.gen_data = true;          % true = generate data. false = load real data
+flags.gen_data = false;          % true = generate data. false = load real data
 
 % Set finance parameters
 set_parameters;
@@ -37,12 +36,12 @@ else
     observ = EURUSD_uniform(offset+1:offset+MAXK);
     interp_state = [];
     tau = [];
+    type = [];
 end
 
 % Plot data
 fig = figure(1);
 plot_results(flags, params, times, observ, tau, type, interp_state, [], [], fig);
-% plot(times, interp_state(1,:), 'b', times, observ, 'r'); drawnow;
 
 %% Filtering
 
@@ -87,9 +86,9 @@ plot_results(flags, params, times, observ, tau, type, interp_state, kiti_pts, fi
 %% Evaluation
 
 % Errors
-[filt_mNs, filt_mospa, filt_mean_rmse, filt_MAP_rmse ] = performance_measures(params, filt_pts, times, tau, interp_state);
-[kiti_mNs, kiti_mospa, kiti_mean_rmse, kiti_MAP_rmse ] = performance_measures(params, kiti_pts, times, tau, interp_state);
-[VRPS_mNs, VRPS_mospa, VRPS_mean_rmse, VRPS_MAP_rmse ] = performance_measures(params, smooth_pts, times, tau, interp_state);
+[filt_mNs, filt_mospa, filt_mean_rmse, filt_MAP_rmse ] = performance_measures(params, filt_pts, times, observ, tau, interp_state);
+[kiti_mNs, kiti_mospa, kiti_mean_rmse, kiti_MAP_rmse ] = performance_measures(params, kiti_pts, times, observ, tau, interp_state);
+[VRPS_mNs, VRPS_mospa, VRPS_mean_rmse, VRPS_MAP_rmse ] = performance_measures(params, smooth_pts, times, observ, tau, interp_state);
 if ~isempty(interp_state)
     figure(6), hold on
     plot(times, filt_mean_rmse.value_over_time, 'r')

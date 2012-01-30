@@ -1,4 +1,4 @@
-function [ Nup ] = count_unique_particles( times, pts )
+function [ Nup, Nut, Nujt ] = count_unique_particles( times, pts )
 %COUNT_UNIQUE_PARTICLES Does what it says on the tin
 
 K = length(times);
@@ -12,7 +12,7 @@ for k = 1:K
         disp(['Time step ' num2str(k)]);
     end
     
-    unique = true(Np,1);
+    uniq = true(Np,1);
     
     % Loop through particles
     for ii = 1:Np
@@ -23,7 +23,7 @@ for k = 1:K
         for jj = ii+1:Np
             
             % Only look at particles which we still know to be unique
-            if unique(jj)
+            if uniq(jj)
                 
                 tau_jj = pts(jj).tau(pts(jj).tau<times(k));
                 
@@ -34,7 +34,7 @@ for k = 1:K
                     if all(tau_ii==tau_jj)
                         
                         % Particle is not unique, cross it off
-                        unique(jj) = false;
+                        uniq(jj) = false;
                         Nup(k) = Nup(k) - 1;
                         
                     end
@@ -48,6 +48,18 @@ for k = 1:K
     end
     
 end
+
+Nut = Nup(end);
+
+tau = [];
+% Loop through particles
+for ii = 1:Np
+    
+    tau = [tau pts(ii).tau];
+    
+end
+
+Nujt = length(unique(tau));
 
 end
 

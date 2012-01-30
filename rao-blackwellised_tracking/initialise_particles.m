@@ -3,7 +3,7 @@ function [ pts, weights ] = initialise_particles( flags, params, Np, observ )
 
 % Starting mean and covariance
 mu_init = [observ(1); 0];
-P_init = [params.x_start_sd, 0; 0 params.xdot_start_sd];
+P_init = [params.x_start_sd^2, 0; 0 params.xdot_start_sd^2];
 
 % Initialise the particle set
 pts = struct('Ns', 1, ...

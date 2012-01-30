@@ -40,7 +40,7 @@ if ~isempty(kd_est)
     legend('x', 'x-dot');
 end
 ylabel('jump kd estimate');
-if flags.gen_data
+if ~isempty(true_tau)
     for tt=1:length(true_tau)
         if true_type(tt) == 1
             plot([true_tau(tt),true_tau(tt)], [0,2]','k');

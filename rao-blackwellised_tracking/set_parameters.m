@@ -31,5 +31,5 @@ params.R = params.obs_sd^2;
 % Algorithm
 params.Np = 100;            % Target number of filtering particles
 params.S = 100;             % Number of smoothing trajectories
-params.x_start_sd = 0.1;
-params.xdot_start_sd = 0.01;
+params.x_start_sd = 0.01;
+params.xdot_start_sd = 0.0001;
