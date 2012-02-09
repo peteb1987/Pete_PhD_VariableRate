@@ -18,7 +18,7 @@ RandStream.setDefaultStream(s);
 flags.gen_data = true;          % true = generate data. false = load real data
 
 % Tracking model flags
-flags.space_dim = 3;            % 2 for 2D, 3 for 3D
+flags.space_dim = 2;            % 2 for 2D, 3 for 3D
 flags.dyn_mod = 2;              % 1 = tangential and normal accelarations only
                                 % 2 = plus linear velocities
 flags.obs_mod = 2;              % 1 = linear gaussian
@@ -86,27 +86,30 @@ figure(4), hist([smooth_pts.Ns])
 %% Evaluation
 
 % Evaluate various performance measures
+[ filt_rmse, filt_MAP_rmse ] = filter_errors( flags, params, filt_part_sets, times, true_tau, true_intx );
 [ kiti_mNs, kiti_mospa, kiti_rmse, kiti_MAP_rmse ] = performance_measures( flags, params, filt_part_sets{end}, times, true_tau, true_intx );
 [ VRPS_mNs, VRPS_mospa, VRPS_rmse, VRPS_MAP_rmse ] = performance_measures( flags, params, smooth_pts, times, true_tau, true_intx );
 
 fprintf(1, 'Number of states: True: %u. Kitigawa: %f. VRPS: %f.\n', length(true_tau), kiti_mNs, VRPS_mNs);
-fprintf(1, 'MMSE Position errors: Kitigawa: %f. VRPS: %f.\n', kiti_rmse.pos, VRPS_rmse.pos);
-fprintf(1, 'MMSE Velocity errors: Kitigawa: %f. VRPS: %f.\n', kiti_rmse.vel, VRPS_rmse.vel);
-fprintf(1, 'MAP Position errors: Kitigawa: %f. VRPS: %f.\n', kiti_MAP_rmse.pos, VRPS_MAP_rmse.pos);
-fprintf(1, 'MAP Velocity errors: Kitigawa: %f. VRPS: %f.\n', kiti_MAP_rmse.vel, VRPS_MAP_rmse.vel);
+fprintf(1, 'MMSE Position errors: Filter: %f. Kitigawa: %f. VRPS: %f.\n', filt_rmse.pos, kiti_rmse.pos, VRPS_rmse.pos);
+fprintf(1, 'MMSE Velocity errors: Filter: %f. Kitigawa: %f. VRPS: %f.\n', filt_rmse.vel, kiti_rmse.vel, VRPS_rmse.vel);
+fprintf(1, 'MAP Position errors: Filter: %f. Kitigawa: %f. VRPS: %f.\n', filt_MAP_rmse.pos, kiti_MAP_rmse.pos, VRPS_MAP_rmse.pos);
+fprintf(1, 'MAP Velocity errors: Filter: %f. Kitigawa: %f. VRPS: %f.\n', filt_MAP_rmse.vel, kiti_MAP_rmse.vel, VRPS_MAP_rmse.vel);
 fprintf(1, 'Jump Time MOSPA: Kitigawa: %f. VRPS: %f.\n', kiti_mospa, VRPS_mospa);
 
 figure, hold on
-plot(times, kiti_rmse.pos_over_time, 'r');
-plot(times, VRPS_rmse.pos_over_time, 'b');
+plot(times, filt_rmse.pos_over_time, 'r');
+plot(times, kiti_rmse.pos_over_time, 'b');
+plot(times, VRPS_rmse.pos_over_time, 'g');
 
 figure, hold on
-plot(times, kiti_rmse.vel_over_time, 'r');
-plot(times, VRPS_rmse.vel_over_time, 'b');
+plot(times, filt_rmse.vel_over_time, 'r');
+plot(times, kiti_rmse.vel_over_time, 'b');
+plot(times, VRPS_rmse.vel_over_time, 'g');
 
 % Count the number of unique particles
-[ kiti_Nup ] = count_unique_particles( times, filt_part_sets{end} );
-[ VRPS_Nup ] = count_unique_particles( times, smooth_pts );
+[ kiti_Nup, kiti_Nut, kiti_Nujt ] = count_unique_particles( times, filt_part_sets{end} );
+[ VRPS_Nup, VRPS_Nut, VRPS_Nujt ] = count_unique_particles( times, smooth_pts );
 
 figure, hold on
 plot(times, kiti_Nup, 'r');

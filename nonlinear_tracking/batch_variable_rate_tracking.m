@@ -4,6 +4,9 @@
 
 clup
 
+% Add toolbox folders to path
+addpath('ekfukf/','arraylab/','lightspeed/');
+
 % How many random seed to try?
 num_seeds = 10;
 
@@ -11,9 +14,12 @@ num_seeds = 10;
 results_filter_pts = cell(num_seeds,1);
 results_filter_weights = cell(num_seeds,1);
 results_smoother_pts = cell(num_seeds,1);
+results_filt_MMSE_rmse = cell(num_seeds,1);
+results_filt_MAP_rmse = cell(num_seeds,1);
 
 % Get test flag
 test_flag = str2double(getenv('SGE_TASK_ID'));
+% test_flag = 1;
 
 % Set random seed to determine data generation
 s = RandStream('mt19937ar', 'seed', test_flag);
@@ -52,18 +58,26 @@ for rand_seed = 1:10;
     %% Filtering
     
     % Call filtering algorithm
-    [ results_filter_pts{rand_seed}, results_filter_weights{rand_seed} ] = vr_filter( flags, params, times, observs );
+    [ filt_part_sets, filt_weight_sets ] = vr_filter( flags, params, times, observs );
+    results_filter_pts{rand_seed} = filt_part_sets{end};
+    results_filter_weights{rand_seed} = filt_weight_sets{end};
     
     %% Smoothing
     
     % Call MCMC smoothing algorithm
     [ results_smoother_pts{rand_seed} ] = mcmc_vr_smoother( flags, params, filt_part_sets, times, observs );
     
+    %% Errors
+    [ filt_rmse, filt_MAP_rmse ] = filter_errors( flags, params, filt_part_sets, times, true_tau, true_intx );
+    results_filt_MMSE_rmse{rand_seed} = filt_rmse;
+    results_filt_MAP_rmse{rand_seed} = filt_MAP_rmse;
+    
 end
 
-save(['VRPFS_scen' num2str(test_flag) '_seed' num2str(rand_seed) '.mat'], ...
+save(['VRPFS_scen' num2str(test_flag) '.mat'], ...
      'flags', 'params', ...
      'true_x', 'true_tau', 'observs', 'times', 'true_intx', 'true_w', ...
-     'results_filter_pts',...
-     'results_filter_weights',...
+     'results_filt_MMSE_rmse', 'results_filt_MAP_rmse', ...
+     'results_filter_pts', ...
+     'results_filter_weights', ...
      'results_smoother_pts' );
