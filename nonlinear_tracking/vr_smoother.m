@@ -1,5 +1,6 @@
-function [ pts ] = vr_smoother( flags, params, filt_part_sets, filt_weight_sets, times, observ )
-%VR_SMOOTHER Smoother for variable rate models using direct sampling method.
+function [ pts ] = vr_smoother( flags, params, filt_part_sets, times, observ )
+%MCMC_VR_SMOOTHER Smoother for variable rate models using direct backwards
+%conditional sampling
 
 % Set some local variables
 K = params.K; S = params.S; Np = params.Np;
@@ -25,16 +26,15 @@ for ii = 1:S
     
     % Loop backwards through time
     for k = K:-1:2
-        
-        k
-        
+
         t = times(k);
         
         % Create an array of bacward sampling weights
-        back_weights = zeros(Np,1);
-        fut_lhood_arr = zeros(Np,1);
-        jump_trans_prob_arr = zeros(Np,1);
-        accel_prob_arr = zeros(Np,1);
+%         back_weights = zeros(Np,1);
+        history_lhood_arr = zeros(Np,1);
+        history_trans_prob_arr = zeros(Np,1);
+        current_lhood_arr = zeros(Np,1);
+        current_trans_prob_arr = zeros(Np,1);
         
         % Find indexes
         stop_tau_idx = find_nearest(pt.tau, t, true);
@@ -49,42 +49,40 @@ for ii = 1:S
             start_tau_idx = find_nearest(filt_pt.tau, t, false);
             start_t_idx = find_nearest(times, filt_pt.tau(start_tau_idx), true);
             
-            % Calculate last state backwards
-            prev_x = previous_state(flags, params, pt.x(:,stop_tau_idx), filt_pt.w(:,start_tau_idx), pt.tau(stop_tau_idx)-filt_pt.tau(start_tau_idx));
+            % Transition probability
+            [~, jump_time_prob] = sample_jump_time(flags, params, filt_pt.tau(start_tau_idx), [], pt.tau(stop_tau_idx));
+            w = determine_acceleration(flags, params, filt_pt.x(:,start_tau_idx), pt.x(:,stop_tau_idx), pt.tau(stop_tau_idx)-filt_pt.tau(start_tau_idx));
+            innov_prob = log(mvnpdf(w', zeros(1,dr), params.Q));
+            current_trans_prob_arr(jj) = jump_time_prob + innov_prob;
             
-            % Calculate future likelihood
-            [~, fut_lhood] = interpolate_state(flags, params, filt_pt.tau(start_tau_idx), prev_x, filt_pt.w(:,start_tau_idx), times(k+1:stop_t_idx), observ(:, k+1:stop_t_idx));
-            fut_lhood_arr(jj) = sum(fut_lhood);
+            % Likelihood
+            [~, lhood] = interpolate_state(flags, params, filt_pt.tau(start_tau_idx), filt_pt.x(:,start_tau_idx), w, times(start_t_idx:stop_t_idx), observ(:, start_t_idx:stop_t_idx));
+            current_lhood_arr(jj) = sum(lhood);
             
-            % Calculate transition probability
-            [~, jump_trans_prob_arr(jj)] = sample_jump_time(flags, params, filt_pt.tau(start_tau_idx), [], pt.tau(stop_tau_idx));
-            accel_prob_arr(jj) = log(mvnpdf(filt_pt.w(:,start_tau_idx)', zeros(1,dr), params.Q));
-            
-            if k == 460
-                [new_intx, ~] = interpolate_state(flags, params, filt_pt.tau(start_tau_idx), prev_x, filt_pt.w(:,start_tau_idx), times(start_t_idx:stop_t_idx), observ(:, start_t_idx:stop_t_idx));
-                figure(2), hold on
-                plot(new_intx(1,:), new_intx(2,:), 'color', [rand, rand, rand]);
-            end
+            % History probabilities
+            history_lhood_arr(jj) = sum(filt_pt.lhood(1:start_t_idx-1));
+            history_trans_prob_arr(jj) = sum(filt_pt.tau_prob(1:start_tau_idx)) + sum(filt_pt.w_prob(1:start_tau_idx-1));
             
         end
         
         % Calculate weights
-        back_weights = filt_weight_sets{k} + fut_lhood_arr + jump_trans_prob_arr + accel_prob_arr;
+        back_weights = history_lhood_arr + history_trans_prob_arr + current_lhood_arr + current_trans_prob_arr;
         
         % Sample weights
         back_weights = back_weights - max(back_weights);
         jj = randsample(Np, 1, true, exp(back_weights));
         filt_pt = filt_part_sets{k}(jj);
+        
+        % Construct new particle
         start_tau_idx = find_nearest(filt_pt.tau, t, false);
         start_t_idx = find_nearest(times, filt_pt.tau(start_tau_idx), true);
-        prev_x = previous_state(flags, params, pt.x(:,stop_tau_idx), filt_pt.w(:,start_tau_idx), pt.tau(stop_tau_idx)-filt_pt.tau(start_tau_idx));
-        
-        % Update particle
         pt.tau = [filt_pt.tau(1:start_tau_idx) pt.tau(stop_tau_idx:end)];
         pt.Ns = size(pt.tau,2);
+        pt.x = [filt_pt.x(:,1:start_tau_idx) pt.x(:,stop_tau_idx:end)];
         pt.w = [filt_pt.w(:,1:start_tau_idx) pt.w(:,stop_tau_idx:end)];
-        pt.x = [zeros(params.state_dim,start_tau_idx-1) prev_x pt.x(:,stop_tau_idx:end)];
-        [pt.intx(:,k:stop_t_idx), ~] = interpolate_state(flags, params, pt.tau(start_tau_idx), prev_x, pt.w(:,start_tau_idx), times(k:stop_t_idx), observ(:, k:stop_t_idx));
+        w = determine_acceleration(flags, params, filt_pt.x(:,start_tau_idx), pt.x(:,start_tau_idx+1), pt.tau(start_tau_idx+1)-filt_pt.tau(start_tau_idx));
+        pt.w(:, start_tau_idx) = w;
+        [pt.intx(:,start_t_idx:stop_t_idx), ~] = interpolate_state(flags, params, pt.tau(start_tau_idx), pt.x(:,start_tau_idx), pt.w(:,start_tau_idx), times(start_t_idx:stop_t_idx), observ(:, start_t_idx:stop_t_idx));
         
     end
     

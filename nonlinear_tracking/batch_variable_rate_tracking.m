@@ -18,8 +18,8 @@ results_filt_MMSE_rmse = cell(num_seeds,1);
 results_filt_MAP_rmse = cell(num_seeds,1);
 
 % Get test flag
-test_flag = str2double(getenv('SGE_TASK_ID'));
-% test_flag = 1;
+% test_flag = str2double(getenv('SGE_TASK_ID'));
+test_flag = 1;
 
 % Set random seed to determine data generation
 s = RandStream('mt19937ar', 'seed', test_flag);

@@ -64,8 +64,8 @@ figure(3), hist([filt_part_sets{params.K}.Ns])
 %% Smoothing
 
 % Call MCMC smoothing algorithm
-[ smooth_pts ] = mcmc_vr_smoother( flags, params, filt_part_sets, times, observs );
-% [ smooth_pts ] = vr_smoother( flags, params, filt_part_sets, filt_weight_sets, times, observs );
+% [ smooth_pts ] = mcmc_vr_smoother( flags, params, filt_part_sets, times, observs );
+[ smooth_pts ] = vr_smoother( flags, params, filt_part_sets, times, observs );
 
 % Calculate jump time kernel density estimate
 [smooth_kd_times, smooth_jump_kdest] = jump_time_kernel_density(times(params.K), smooth_pts);
