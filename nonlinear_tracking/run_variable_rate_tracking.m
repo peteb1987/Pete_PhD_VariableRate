@@ -7,7 +7,7 @@ dbstop if error
 % dbstop if warning
 
 % DEFINE RANDOM SEED
-rand_seed = 1;
+rand_seed = 0;
 
 % Set random seed
 s = RandStream('mt19937ar', 'seed', rand_seed);
@@ -18,14 +18,14 @@ RandStream.setDefaultStream(s);
 flags.gen_data = true;          % true = generate data. false = load real data
 
 % Tracking model flags
-flags.space_dim = 2;            % 2 for 2D, 3 for 3D
+flags.space_dim = 3;            % 2 for 2D, 3 for 3D
 flags.dyn_mod = 2;              % 1 = tangential and normal accelarations only
                                 % 2 = plus linear velocities
 flags.obs_mod = 2;              % 1 = linear gaussian
                                 % 2 = radar with gaussian noise
 
 % Observed velocity?
-flags.obs_vel = false;           % true = observations of position and velocity. false = only position observations
+flags.obs_vel = true;           % true = observations of position and velocity. false = only position observations
 
 % Use resample-move?
 flags.resam_move = true;
@@ -64,8 +64,8 @@ figure(3), hist([filt_part_sets{params.K}.Ns])
 %% Smoothing
 
 % Call MCMC smoothing algorithm
-% [ smooth_pts ] = mcmc_vr_smoother( flags, params, filt_part_sets, times, observs );
-[ smooth_pts ] = vr_smoother( flags, params, filt_part_sets, times, observs );
+[ smooth_pts ] = mcmc_vr_smoother( flags, params, filt_part_sets, times, observs );
+% [ smooth_pts ] = vr_smoother( flags, params, filt_part_sets, times, observs );
 
 % Calculate jump time kernel density estimate
 [smooth_kd_times, smooth_jump_kdest] = jump_time_kernel_density(times(params.K), smooth_pts);

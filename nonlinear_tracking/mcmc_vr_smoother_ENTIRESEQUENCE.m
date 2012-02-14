@@ -60,12 +60,6 @@ for ii = 1:S
         new_start_t_idx = find_nearest(times, new_pt.tau(new_start_tau_idx), true);
         new_stop_t_idx = find_nearest(times, new_pt.tau(new_stop_tau_idx), false);
         
-        % Evaluate past filtering probabilities (stored)
-        new_past_lhood = sum(new_pt.lhood(new_start_t_idx:k));
-        old_past_lhood = sum(old_pt.lhood(old_start_t_idx:k));
-        new_past_trans_prob = new_pt.tau_prob(new_start_tau_idx) + copy_pt.w_prob(new_start_tau_idx);
-        old_past_trans_prob = old_pt.tau_prob(old_start_tau_idx) + old_pt.w_prob(old_start_tau_idx);
-        
         % Calculate jump transition probabilities
         [~, new_jump_trans_prob] = sample_jump_time(flags, params, new_pt.tau(new_start_tau_idx), t, new_pt.tau(new_stop_tau_idx));
         [~, old_jump_trans_prob] = sample_jump_time(flags, params, old_pt.tau(old_start_tau_idx), t, old_pt.tau(old_stop_tau_idx));
@@ -73,10 +67,9 @@ for ii = 1:S
         % Calculate accelerations and associated probabilities
         w_new = determine_acceleration(flags, params, new_pt.x(:,new_start_tau_idx), new_pt.x(:,new_stop_tau_idx), new_pt.tau(new_stop_tau_idx)-new_pt.tau(new_start_tau_idx));
         w_old = determine_acceleration(flags, params, old_pt.x(:,old_start_tau_idx), old_pt.x(:,old_stop_tau_idx), old_pt.tau(old_stop_tau_idx)-old_pt.tau(old_start_tau_idx));
+        new_pt.w(:,new_start_tau_idx) = w_new;
         new_accel_prob = log(mvnpdf(w_new', zeros(1,dr), params.Q));
         old_accel_prob = log(mvnpdf(w_old', zeros(1,dr), params.Q));
-        
-        new_pt.w(:,new_start_tau_idx) = w_new;
         new_pt.tau_prob(new_start_tau_idx) = new_jump_trans_prob;
         new_pt.w_prob(new_start_tau_idx) = new_accel_prob;
         
@@ -88,11 +81,16 @@ for ii = 1:S
         new_bridge_lhood = sum(new_pt.lhood(new_start_t_idx:new_stop_t_idx));
         old_bridge_lhood = sum(old_pt.lhood(old_start_t_idx:old_stop_t_idx));
         
+        % Evaluate past probabilities (stored)
+        new_past_lhood = sum(new_pt.lhood(1:new_start_t_idx-1));
+        old_past_lhood = sum(old_pt.lhood(1:old_start_t_idx-1));
+        new_past_trans_prob = sum(new_pt.tau_prob(1:new_start_tau_idx)) + sum(new_pt.w_prob(1:new_start_tau_idx-1));
+        old_past_trans_prob = sum(old_pt.tau_prob(1:old_start_tau_idx)) + sum(old_pt.w_prob(1:old_start_tau_idx-1));
+        
         % Calculate MH acceptance probability
-        acc_prob = (new_bridge_lhood+new_accel_prob+new_jump_trans_prob) ...
-                  -(old_bridge_lhood+old_accel_prob+old_jump_trans_prob) ...
-                  +(old_past_lhood+old_past_trans_prob) ...
-                  -(new_past_lhood+new_past_trans_prob);
+        acc_prob = (new_past_lhood+new_past_trans_prob+new_bridge_lhood+new_accel_prob+new_jump_trans_prob) ...
+                  -(old_past_lhood+old_past_trans_prob+old_bridge_lhood+old_accel_prob+old_jump_trans_prob) ...
+                  +(rev_ppsl-ppsl);
         
         % Test for acceptance
         if log(rand) < acc_prob
