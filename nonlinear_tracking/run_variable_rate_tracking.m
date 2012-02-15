@@ -7,7 +7,7 @@ dbstop if error
 % dbstop if warning
 
 % DEFINE RANDOM SEED
-rand_seed = 0;
+rand_seed = 1;
 
 % Set random seed
 s = RandStream('mt19937ar', 'seed', rand_seed);
@@ -25,7 +25,7 @@ flags.obs_mod = 2;              % 1 = linear gaussian
                                 % 2 = radar with gaussian noise
 
 % Observed velocity?
-flags.obs_vel = true;           % true = observations of position and velocity. false = only position observations
+flags.obs_vel = false;           % true = observations of position and velocity. false = only position observations
 
 % Use resample-move?
 flags.resam_move = true;
@@ -64,7 +64,7 @@ figure(3), hist([filt_part_sets{params.K}.Ns])
 %% Smoothing
 
 % Call MCMC smoothing algorithm
-[ smooth_pts ] = mcmc_vr_smoother( flags, params, filt_part_sets, times, observs );
+[ smooth_pts ] = mcmc_vr_smoother( flags, params, filt_part_sets, filt_weight_sets, times, observs );
 % [ smooth_pts ] = vr_smoother( flags, params, filt_part_sets, times, observs );
 
 % Calculate jump time kernel density estimate

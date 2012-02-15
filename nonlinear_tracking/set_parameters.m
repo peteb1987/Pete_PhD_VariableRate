@@ -45,6 +45,7 @@ x_rate_var = 1;
 %%% Algorithm 
 params.Np = 50;                         % Target number of filtering particles
 params.S = 50;                          % Number of smoothing trajectories
+params.M = 1;
 params.ppsl_move_time_sd = ...          % Standard deviation for proposal distribution for moving jump times
     0.1*(params.rate_shape*params.rate_scale);
 params.min_num_ppsl_frames = 20;         % Minimum number of frames over which the UKF-approximated OID proposal is constructed
