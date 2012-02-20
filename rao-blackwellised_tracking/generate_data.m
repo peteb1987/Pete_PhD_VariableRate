@@ -1,100 +1,98 @@
-function [state_tau, state_type, observ, times, interp_x] = generate_data( params )
-%GENERATE_DATA_FINANCE Generate jump diffusion finance data
+function [all_x, cp_x, cp_tau, cp_u, times, observs] = generate_data( flags, params )
+%GENERATE_DATA Generate model-switching tracking data
 
 % This version uses a regular time grid.
 
 dt = params.dt;
-F = params.F;
-C = params.C;
-L = params.L;
 R = params.R;
+ds = params.state_dim; do = params.obs_dim;
 
-% Generate x jump times
-x_jump_times = 0;
-x_jump_types = 0;
-x_jump_mags = [0 0];
-num_x_jumps = 0;
-last_x_jump = 0;
-while (num_x_jumps==0)||(x_jump_times(num_x_jumps)<params.T)
-    num_x_jumps = num_x_jumps + 1;
-    x_jump_times(num_x_jumps,1) = last_x_jump + rande(1/params.x_jump_rate);
-    x_jump_types(num_x_jumps,1) = 1;
-    x_jump_mags(num_x_jumps,:) = [normrnd(params.x_jump_mn, params.x_jump_sd), 0];
-    last_x_jump = x_jump_times(num_x_jumps);
+% Generate changepoint times and marks
+cp_tau = 0;
+cp_u = [1; 0];
+cp_x = params.start_state;
+Ns = 1;
+last_tau = 0;
+while (Ns==0)||(cp_tau(Ns)<params.T)
+    Ns = Ns + 1;
+    cp_tau(1, Ns) = last_tau + gamrnd(params.rate_shape, params.rate_scale);
+    cp_u(:, Ns) = [unidrnd(2); 0];
+        if cp_u(1, Ns) == 1
+        cp_u(2, Ns) = mvnrnd(0, params.accel_var);
+    elseif cp_u(1, Ns) == 2
+        cp_u(2, Ns) = mvnrnd(0, params.tr_var);
+    end
+    last_tau = cp_tau(Ns);
 end
 
-% Generate xdot jump times
-xdot_jump_times = 0;
-xdot_jump_types = 0;
-xdot_jump_mags = [0 0];
-num_xdot_jumps = 0;
-last_xdot_jump = 0;
-while (num_xdot_jumps==0)||(xdot_jump_times(num_xdot_jumps)<params.T)
-    num_xdot_jumps = num_xdot_jumps + 1;
-    xdot_jump_times(num_xdot_jumps,1) = last_xdot_jump + rande(1/params.xdot_jump_rate);
-    xdot_jump_types(num_xdot_jumps,1) = 2;
-    xdot_jump_mags(num_xdot_jumps,:) = [0 normrnd(params.xdot_jump_mn, params.xdot_jump_sd)];
-    last_xdot_jump = xdot_jump_times(num_xdot_jumps);
-end
+% Create arrays
+times = cumsum(dt*ones(params.K,1));            % Array of times
+all_x = zeros(ds,Ns);                           % Array of states
+observs = zeros(do,params.K);                   % Array of observsations
 
-% Combine the lists
-temp = [x_jump_times x_jump_types x_jump_mags; xdot_jump_times xdot_jump_types xdot_jump_mags];
-temp = sortrows(temp, 1);
-jump_times = temp(:,1);
-jump_types = temp(:,2);
-jump_mags = temp(:,3:4);
-
-% Create a state vector array and observation vector array
-times = cumsum(dt*ones(params.K,1))-dt;
-state = zeros(2,params.K);
-observ = zeros(1,params.K);
-
-% Loop through observation times and generate states
-last_state = [params.x_start; params.xdot_start];
+% Initialise for loop
+ti=1;                               % jump counter
+last_x = params.start_state;             % starting state
 last_t = 0;
-ti=1;               % jump counter
+
+% Loop through observsation times and generate states
 for k=1:params.K
     
     t = times(k);
     
-    % Iteratively sample forwards to the next jump and through it
-    interm_state = last_state;
     interm_t = last_t;
-    while jump_times(ti) < t
+    interm_x = last_x;
+    
+    % Iteratively sample forwards to the next jump and through it
+    while cp_tau(ti+1) < t
         
-        % Diffusion
-        [A, Q] = lti_disc(F,L,C,(jump_times(ti)-interm_t));
-        interm_state = mvnrnd(A*interm_state, Q)';
-        
-        % Jump
-        interm_state = interm_state + jump_mags(ti,:)';
+        [A, Q] = construct_transmats(cp_tau(ti+1)-interm_t, cp_u(1,ti), cp_u(2,ti), params.proc_var);
         
         % Increment jump counter
         ti = ti + 1;
+        interm_t = cp_tau(ti);
+        
+        % Sample state
+        x = mvnrnd((A*interm_x)', Q)';
+        if magn(x(3:4))>params.max_vel
+            x(3:4) = params.max_vel*x(3:4)/magn(x(3:4));
+        end
+        
+        % Set new acceleration
+        if cp_u(1, ti) == 1
+            x(5:6) = cp_u(2,ti)*unit(x(3:4));
+        elseif cp_u(1, ti) == 2
+            x(5:6) = cp_u(2,ti)*[-x(4); x(3)];
+        end
+        
+        cp_x(:, ti) = x;
+        
+        interm_t = t;
+        interm_x = x;
         
     end
     
-    %Sample up to the next time point
-    [A, Q] = lti_disc(F,L,C,t-interm_t);
-    state(:,k) = mvnrnd(A*interm_state, Q)';
+    [A, Q] = construct_transmats(t-interm_t, cp_u(1,ti), cp_u(2,ti), params.proc_var);
     
-    % Sample observation
-    observ(1,k) = mvnrnd(state(1,k), R);
+    x = mvnrnd((A*interm_x)', Q)';
+    if magn(x(3:4))>params.max_vel
+        x(3:4) = params.max_vel*x(3:4)/magn(x(3:4));
+    end
+
+    % Store state
+    all_x(:,k) = x;
+	
+    % Sample observsation
+    mu = observation_mean(flags, params, x);
+    observs(:,k) = mvnrnd(mu', R)';
     
-    % Keep it for next time
-    last_state = state(:,k);
     last_t = t;
+    last_x = x;
     
 end
 
 % Remove states after the end of time
-jump_types(jump_times>params.T)=[];
-jump_times(jump_times>params.T)=[];
-
-state_tau = [0 jump_times'];
-state_type = [0 jump_types'];
-interp_x = state;
-times = (0:params.K-1)*dt;
+cp_tau = cp_tau(1,1:ti);
+cp_u = cp_u(1,1:ti);
 
 end
-
