@@ -1,18 +1,24 @@
-function [ pts, weights ] = initialise_particles( flags, params, Np, observ )
-%INITIALISE_PARTICLES Initialise particles for rbvrpf
+function [ pts ] = initialise_particles(flags, params, Np)
+%INITIALISE_PARTICLES Set up particles for particle filtering
 
-% Starting mean and covariance
-mu_init = [observ(1); 0];
-P_init = [params.x_start_sd^2, 0; 0 params.xdot_start_sd^2];
+% Generate a random set of starting points and accelerations
+mu = repmat({params.start_state}, [Np,1]);
+P = repmat({params.start_var}, [Np,1]);
 
-% Initialise the particle set
-pts = struct('Ns', 1, ...
-             'tau', 0, ...
-             'type', 0, ...
-             'intmu', num2cell(repmat(mu_init,[1,Np]), 1)', ...
-             'intP', squeeze(num2cell(repmat(P_init,[1,1,Np]), [1,2])) );
+cp = struct('tau', 0,...                    % Changepoint times
+             'm', 1,...                     % Model following each changepoint
+             'u', 1,...                     % Model parameters following each changepoint
+             'Ns', 1);                      % Number of changepoints
 
-weights = log(ones(Np,1)/Np);
+kin = struct('mu', zeros(6,0),...           % State mean at each observation time
+             'P', zeros(6,6,0));            % State covariance at each obsrvation time
+
+kin0 = struct('mu0', mu,...                 % State mean at each observation time
+             'P0', P);                      % State covariance at each obsrvation time
+
+% Put the values into cell array
+pts = struct('kin0', kin0,...
+             'kin', kin,...
+             'cp', cp);
 
 end
-

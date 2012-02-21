@@ -1,4 +1,4 @@
-function [A, Q] = construct_transmats(dt, model, w, sigma)
+function [A, Q, Ajump] = construct_transmats(dt, model, w, sigma)
 %CONSTRUCT_TRANSMATS Construct the transition matrices for different
 %tracking models
 
@@ -17,7 +17,8 @@ if (model == 1)||(w==0)
                 0,  dt^4/8,      0, dt^3/3,      0, dt^2/2;
            dt^3/6,       0, dt^2/2,      0,     dt,      0;
                 0,  dt^3/6,      0, dt^2/2,      0,     dt] * sigma;
-
+    
+    Ajump = [1 0 0 0 0 0; 0 1 0 0 0 0; 0 0 1 0 0 0; 0 0 0 1 0 0; 0 0 w 0 0 0; 0 0 0 w 0 0];
     
     
 elseif model == 2
@@ -52,6 +53,8 @@ elseif model == 2
     Q = [Q1  Q2' Q3';
          Q2  Q4  Q5';
          Q3  Q5  Q6 ] * sigma;
+     
+     Ajump = [1 0 0 0 0 0; 0 1 0 0 0 0; 0 0 1 0 0 0; 0 0 0 1 0 0; 0 0 0 -w 0 0; 0 0 w 0 0 0];
 
 % Q = (Q+Q')/2;
 

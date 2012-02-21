@@ -20,7 +20,7 @@ params.rate_shape = 5;                  % State time gamma distribution shape pa
 params.rate_scale = 1;                  % State time gamma distribution scale parameter (this is "b", or "theta")
 
 % Process variance
-params.proc_var = 0.1;
+params.proc_var = 0.01;
 
 % Turn rate
 params.tr_var = 1;

@@ -17,7 +17,7 @@ while (Ns==0)||(cp_tau(Ns)<params.T)
     Ns = Ns + 1;
     cp_tau(1, Ns) = last_tau + gamrnd(params.rate_shape, params.rate_scale);
     cp_u(:, Ns) = [unidrnd(2); 0];
-        if cp_u(1, Ns) == 1
+    if cp_u(1, Ns) == 1
         cp_u(2, Ns) = mvnrnd(0, params.accel_var);
     elseif cp_u(1, Ns) == 2
         cp_u(2, Ns) = mvnrnd(0, params.tr_var);
@@ -46,7 +46,7 @@ for k=1:params.K
     % Iteratively sample forwards to the next jump and through it
     while cp_tau(ti+1) < t
         
-        [A, Q] = construct_transmats(cp_tau(ti+1)-interm_t, cp_u(1,ti), cp_u(2,ti), params.proc_var);
+        [A, Q, Ajump] = construct_transmats(cp_tau(ti+1)-interm_t, cp_u(1,ti), cp_u(2,ti), params.proc_var);
         
         % Increment jump counter
         ti = ti + 1;
@@ -59,12 +59,9 @@ for k=1:params.K
         end
         
         % Set new acceleration
-        if cp_u(1, ti) == 1
-            x(5:6) = cp_u(2,ti)*unit(x(3:4));
-        elseif cp_u(1, ti) == 2
-            x(5:6) = cp_u(2,ti)*[-x(4); x(3)];
-        end
+        x = Ajump*x;
         
+        % Store
         cp_x(:, ti) = x;
         
         interm_t = t;
@@ -72,7 +69,7 @@ for k=1:params.K
         
     end
     
-    [A, Q] = construct_transmats(t-interm_t, cp_u(1,ti), cp_u(2,ti), params.proc_var);
+    [A, Q, ~] = construct_transmats(t-interm_t, cp_u(1,ti), cp_u(2,ti), params.proc_var);
     
     x = mvnrnd((A*interm_x)', Q)';
     if magn(x(3:4))>params.max_vel
