@@ -1,4 +1,4 @@
-function [ mu, P ] = KF_kinematic_state( flags, params, k, cp, kin, times, observs  )
+function [ mu, P, lhood ] = KF_kinematic_state( flags, params, k, cp, mu, P, times, observs  )
 %KF_KINEMATIC_STATE Kalman filter the kinematic state given the nonlinear
 %parameters.
 
@@ -6,9 +6,6 @@ Ns = cp.Ns;
 tau = cp.tau(Ns);
 m = cp.m(Ns);
 u = cp.u(Ns);
-
-mu = kin.mu(:,k-1);
-P = kin.P(:,:,k-1);
 
 t = times(k);
 if k > 1
@@ -29,8 +26,7 @@ end
 
 % Kalman Filter
 [mu, P] = kf_predict(mu, P, A, Q);
-innov_mean = observation_mean(flags, params, mu);
-H = [1 0 0 0 0 0; 0 1 0 0 0 0]';
-[mu, P] = kf_update(mu, P, observs(:,k), H, params.R);
+H = [1 0 0 0 0 0; 0 1 0 0 0 0];
+[mu, P, ~, ~, ~, lhood] = kf_update(mu, P, observs(:,k), H, params.R);
 
 end

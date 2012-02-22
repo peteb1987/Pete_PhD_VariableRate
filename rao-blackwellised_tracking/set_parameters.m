@@ -40,7 +40,7 @@ x_var = 10;
 x_rate_var = 1;
 
 %%% Algorithm 
-params.Np = 50;                         % Target number of filtering particles
+params.Np = 500;                         % Target number of filtering particles
 % params.S = 50;                          % Number of smoothing trajectories
 % params.M = 1;
 % params.ppsl_move_time_sd = ...          % Standard deviation for proposal distribution for moving jump times

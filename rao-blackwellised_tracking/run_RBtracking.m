@@ -43,9 +43,12 @@ figure, plot(times, dot(all_x(3:4,:), all_x(5:6,:)))
 
 % % Calculate jump time kernel density estimate
 % [filt_kd_times, filt_jump_kdest] = jump_time_kernel_density(times(params.K), filt_part_sets{params.K});
-% 
-% % Plot filtering results
-% plot_results( flags, params, f1, true_x, true_tau, times, true_intx, observs, filt_part_sets{params.K}, filt_kd_times, filt_jump_kdest );
+filt_kd_times = [];
+filt_jump_kdest = [];
+
+% Plot filtering results
+f1 = figure;
+plot_results( flags, params, f1, cp_x, cp_tau, times, all_x, observs, filt_part_sets{params.K}, filt_kd_times, filt_jump_kdest );
 % 
 % % Histogram number of states
 % figure(3), hist([filt_part_sets{params.K}.Ns])

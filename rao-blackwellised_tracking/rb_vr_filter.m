@@ -53,13 +53,14 @@ for k = 1:K
         
         % Get state of particle from last time frame
         if k == 1
-            last_kin = last_pts(ii).kin0;
+            last_mu = last_pts(ii).mu0;
+            last_P = last_pts(ii).P0;
         else
-            last_kin = last_pts(ii).kin;
+            last_mu = last_pts(ii).mu(:,k-1);
+            last_P = last_pts(ii).P(:,:,k-1);
         end
         
-        last_cp = last_pts(ii).cp;
-        last_Ns = last_cp.Ns;
+        last_Ns = last_pts(ii).cp.Ns;
         
         non_jumping_kids = 0;
         
@@ -69,7 +70,7 @@ for k = 1:K
             % If using RM, need to reset "last_" values
             
             % Sample next jump time to see if one has happened since t-1
-            [tau, m, u, trans_prob] = sample_jump_time( flags, params, last_cp.tau(:,last_Ns), last_t);
+            [tau, m, u, trans_prob] = sample_jump_time( flags, params, last_pts(ii).cp.tau(:,last_Ns), last_t);
             
             % If a jump has occured, add it to the state and update weight
             if tau < t
@@ -98,7 +99,9 @@ for k = 1:K
                 pts(jj).cp.u(:,Ns) = u;
                 
                 % KF and calculate likelihood
-                [pts(jj).kin.mu(:,k), pts(jj).kin.P(:,k), pred_lhood] = KF_kinematic_state(flags, params, pts(jj).cp, last_kin, observs(:,k));
+                [pts(jj).mu(:,k), pts(jj).P(:,:,k), pred_lhood] = KF_kinematic_state(flags, params, k, pts(jj).cp, last_mu, last_P, times, observs);
+                
+                assert(size(pts(jj).mu, 2)==k)
                 
                 % Update weight
                 weights(jj) = weights(jj) + pred_lhood;
@@ -112,8 +115,8 @@ for k = 1:K
             
         end
         
-%         for ch = 1:non_jumping_kids
-        if non_jumping_kids > 0
+        for ch = 1:non_jumping_kids
+%         if non_jumping_kids > 0
             
             % If using RM, need to reset "last_" values
             
@@ -123,12 +126,14 @@ for k = 1:K
             pts(jj) = last_pts(ii);
             
             % Auxiliary weight
-%             weights(jj) = last_weights(ii)-log(Ni);
-            weights(jj) = log(non_jumping_kids)+last_weights(ii)-log(Ni);
+            weights(jj) = last_weights(ii)-log(Ni);
+%             weights(jj) = log(non_jumping_kids)+last_weights(ii)-log(Ni);
 
             % Interpolate state and calculate likelihood
-            [pts(jj).mu(:,k), pts(jj).P(:,k), pred_lhood] = KF_kinematic_state(flags, params, k, pts(jj), times, observs);
-
+            [pts(jj).mu(:,k), pts(jj).P(:,:,k), pred_lhood] = KF_kinematic_state(flags, params, k, pts(jj).cp, last_mu, last_P, times, observs);
+            
+            assert(size(pts(jj).mu, 2)==k)
+            
             % Update weight
             weights(jj) = weights(jj) + pred_lhood;
             
@@ -157,7 +162,7 @@ for k = 1:K
     % Store for next time
     last_pts = pts;
     last_weights = weights;
-    last_t = times(k-1);
+    last_t = t;
     last_Np = Np;
     
     % Output
