@@ -7,7 +7,7 @@ dbstop if error
 % dbstop if warning
 
 % DEFINE RANDOM SEED
-rand_seed = 3;
+rand_seed = 2;
 
 % Set random seed
 s = RandStream('mt19937ar', 'seed', rand_seed);
@@ -25,7 +25,7 @@ set_parameters;
 
 %% Data
 
-[all_x, cp_x, cp_tau, cp_u, times, observs] = generate_data( flags, params );
+[all_x, cp_x, cp_tau, cp_m, cp_u, times, observs] = generate_data( flags, params );
 
 figure, hold on, plot(all_x(1,:), all_x(2,:)), plot(cp_x(1,:), cp_x(2,:), '*g'), plot(observs(1,:), observs(2,:), 'r');
 figure, hold on, plot(times, magn(all_x(3:4, :))), plot(cp_tau, magn(cp_x(3:4,:)), '*g');
@@ -43,12 +43,10 @@ figure, plot(times, dot(all_x(3:4,:), all_x(5:6,:)))
 
 % % Calculate jump time kernel density estimate
 % [filt_kd_times, filt_jump_kdest] = jump_time_kernel_density(times(params.K), filt_part_sets{params.K});
-filt_kd_times = [];
-filt_jump_kdest = [];
 
 % Plot filtering results
 f1 = figure;
-plot_results( flags, params, f1, cp_x, cp_tau, times, all_x, observs, filt_part_sets{params.K}, filt_kd_times, filt_jump_kdest );
+plot_results( flags, params, f1, cp_x, cp_tau, cp_m, times, all_x, observs, filt_part_sets{params.K} );
 % 
 % % Histogram number of states
 % figure(3), hist([filt_part_sets{params.K}.Ns])

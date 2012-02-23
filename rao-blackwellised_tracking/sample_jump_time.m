@@ -15,7 +15,7 @@ if nargin == 4
     if new_m == 1
         new_u = mvnrnd(0, params.accel_var);
     elseif new_m == 2
-        new_u = mvnrnd(0, params.tr_var);
+        new_u = (unidrnd(2)*2-3) * raylrnd(sqrt(2*params.tr_var/(4-pi)));
     end
 end
 
@@ -35,7 +35,7 @@ if nargout > 3
     if new_m == 1
         prob = prob + log(mvnpdf(new_u, 0, params.accel_var));
     elseif new_m == 2
-        prob = prob + log(mvnpdf(new_u, 0, params.tr_var));
+        prob = prob + log(0.5*raylpdf(new_u, sqrt(2*params.tr_var/(4-pi)) ));
     end
     
     % Model

@@ -1,4 +1,4 @@
-function [all_x, cp_x, cp_tau, cp_u, times, observs] = generate_data( flags, params )
+function [all_x, cp_x, cp_tau, cp_m, cp_u, times, observs] = generate_data( flags, params )
 %GENERATE_DATA Generate model-switching tracking data
 
 % This version uses a regular time grid.
@@ -20,7 +20,7 @@ while (Ns==0)||(cp_tau(Ns)<params.T)
     if cp_u(1, Ns) == 1
         cp_u(2, Ns) = mvnrnd(0, params.accel_var);
     elseif cp_u(1, Ns) == 2
-        cp_u(2, Ns) = mvnrnd(0, params.tr_var);
+        cp_u(2, Ns) = (unidrnd(2)*2-3) * raylrnd(sqrt(2*params.tr_var/(4-pi)));
     end
     last_tau = cp_tau(Ns);
 end
@@ -46,7 +46,7 @@ for k=1:params.K
     % Iteratively sample forwards to the next jump and through it
     while cp_tau(ti+1) < t
         
-        [A, Q, Ajump] = construct_transmats(cp_tau(ti+1)-interm_t, cp_u(1,ti), cp_u(2,ti), params.proc_var);
+        [A, Q, ~] = construct_transmats(cp_tau(ti+1)-interm_t, cp_u(1,ti), cp_u(2,ti), params.proc_var);
         
         % Increment jump counter
         ti = ti + 1;
@@ -59,12 +59,12 @@ for k=1:params.K
         end
         
         % Set new acceleration
+        [~, ~, Ajump] = construct_transmats(0, cp_u(1,ti), cp_u(2,ti), params.proc_var);
         x = Ajump*x;
         
         % Store
         cp_x(:, ti) = x;
         
-        interm_t = t;
         interm_x = x;
         
     end
@@ -90,6 +90,7 @@ end
 
 % Remove states after the end of time
 cp_tau = cp_tau(1,1:ti);
-cp_u = cp_u(1,1:ti);
+cp_m = cp_u(1,1:ti);
+cp_u = cp_u(2,1:ti);
 
 end

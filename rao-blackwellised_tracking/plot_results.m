@@ -1,4 +1,4 @@
-function plot_results( flags, params, fig, cp_x, cp_tau, times, x, observs, pts, kd_times, kd_est )
+function plot_results( flags, params, fig, cp_x, cp_tau, cp_m, times, x, observs, pts )
 %PLOT_TRACKING_RESULTS Plot tracks, observations and optionally overlay
 %particles
 
@@ -83,11 +83,32 @@ if ~isempty(pts)
     
 end
 
-% Plot kernel density estimate
-if ~isempty(kd_est)
+% Model posterior
+if ~isempty(pts)
+    
+    true_model_post = zeros(params.K,1);
+    for k = 1:params.K
+        latest_ind = find(cp_tau==max(cp_tau(cp_tau <= times(k))));
+        if cp_m(latest_ind)==2
+            true_model_post(k) = true_model_post(k) + 1;
+        end
+    end
+    
+    model_post = zeros(params.K,1);
+    for k = 1:params.K
+        for ii = 1:params.Np
+            latest_ind = find((pts(ii).cp.tau)==max(pts(ii).cp.tau(pts(ii).cp.tau <= times(k))));
+            if pts(ii).cp.m(latest_ind)==2
+                model_post(k) = model_post(k) + 1;
+            end
+        end
+        model_post(k) = model_post(k)/params.Np;
+    end
+    
     subplot(7,2,[13,14]), hold on
-    plot(kd_times, kd_est, 'b');
-    if flags.gen_data, for tt=1:length(cp_tau), plot([cp_tau(tt),cp_tau(tt)], [0,1]','r'); end, end
+    plot(times, true_model_post, 'b', 'linewidth', 3);
+    plot(times, model_post, 'r');
+    
 end
 
 % Draw

@@ -23,10 +23,10 @@ params.rate_scale = 1;                  % State time gamma distribution scale pa
 params.proc_var = 0.01;
 
 % Turn rate
-params.tr_var = 1;
+params.tr_var = 0.01;
 
 % Acceleration jump
-params.accel_var = 0.01;
+params.accel_var = 0.001;
 
 % Maximum velocity
 params.max_vel = 10;
@@ -36,11 +36,11 @@ range_var = 10;
 bear_var = (pi/90)^2;
 range_rate_var = 0.1;
 bear_rate_var = (pi/30)^2;
-x_var = 10;
+x_var = 1;
 x_rate_var = 1;
 
 %%% Algorithm 
-params.Np = 500;                         % Target number of filtering particles
+params.Np = 100;                         % Target number of filtering particles
 % params.S = 50;                          % Number of smoothing trajectories
 % params.M = 1;
 % params.ppsl_move_time_sd = ...          % Standard deviation for proposal distribution for moving jump times
