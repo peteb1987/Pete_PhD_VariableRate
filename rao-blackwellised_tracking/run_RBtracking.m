@@ -47,6 +47,12 @@ figure, plot(times, dot(all_x(3:4,:), all_x(5:6,:)))
 % Plot filtering results
 f1 = figure;
 plot_results( flags, params, f1, cp_x, cp_tau, cp_m, times, all_x, observs, filt_part_sets{params.K} );
+
+% RTS smooth
+kita_pts = kalman_smooth_pts(flags, params, times, filt_part_sets{end});
+f2 = figure;
+plot_results( flags, params, f2, cp_x, cp_tau, cp_m, times, all_x, observs, kita_pts );
+
 % 
 % % Histogram number of states
 % figure(3), hist([filt_part_sets{params.K}.Ns])

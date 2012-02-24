@@ -6,6 +6,8 @@ params.dt = 0.1;                        % Sampling time (this should only be use
 params.T = params.dt*params.K;          % Time of last observation
 params.min_speed = 0.5;                 % Minimum speed allowed
 
+params.state_dim = 6;
+
 % Starting point distribution (assumed known by algorithm)
 % start_state is used by the data generation function (i.e. it's part of the model)
 % start_var is used to initiialise particles (i.e. it's part of the algorithm)
