@@ -26,8 +26,7 @@ end
 
 % Kalman Filter
 [mu, P] = kf_predict(mu, P, A, Q);
-H = [1 0 0 0 0 0; 0 1 0 0 0 0];
-[mu, P, ~, ~, ~, lin_lhood] = kf_update(mu, P, observs(:,k), H, params.R);
+[mu, P, ~, ~, ~, lin_lhood] = kf_update(mu, P, observs(:,k), params.H, params.R);
 lhood = log(lin_lhood);
 
 end

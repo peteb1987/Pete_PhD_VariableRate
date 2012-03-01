@@ -32,17 +32,10 @@ figure, hold on, plot(times, magn(all_x(3:4, :))), plot(cp_tau, magn(cp_x(3:4,:)
 figure, hold on, plot(times, magn(all_x(5:6, :))), plot(cp_tau, magn(cp_x(5:6,:)), '*g');
 figure, plot(times, dot(all_x(3:4,:), all_x(5:6,:)))
 
-% % Plot data
-% f1 = figure;
-% plot_results( flags, params, f1, true_x, true_tau, times, true_intx, observs, [], [], [] );
-
 %% Filtering
 
 % Call filtering algorithm
 [ filt_part_sets, filt_weight_sets ] = rb_vr_filter( flags, params, times, observs );
-
-% % Calculate jump time kernel density estimate
-% [filt_kd_times, filt_jump_kdest] = jump_time_kernel_density(times(params.K), filt_part_sets{params.K});
 
 % Plot filtering results
 f1 = figure;
@@ -52,6 +45,10 @@ plot_results( flags, params, f1, cp_x, cp_tau, cp_m, times, all_x, observs, filt
 kita_pts = kalman_smooth_pts(flags, params, times, filt_part_sets{end});
 f2 = figure;
 plot_results( flags, params, f2, cp_x, cp_tau, cp_m, times, all_x, observs, kita_pts );
+
+%% Smoothing
+
+[ smooth_pts ] = rb_vr_smoother( flags, params, times, observs, filt_part_sets, filt_weight_sets);
 
 % 
 % % Histogram number of states

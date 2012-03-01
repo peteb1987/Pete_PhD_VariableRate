@@ -3,10 +3,10 @@ function [kd_est] = jump_kernel_est(Np, T, pts_tau, pts_type)
 % particle output
 
 % Make a finely spaced time grid
-t_grid = linspace(0,T,1001)';
+t_grid = linspace(0,T,10001)';
 
 % Set the standard deviation equal to the spacing
-sd = 1*(t_grid(2)-t_grid(1));
+sd = 10*(t_grid(2)-t_grid(1));
 
 % Make a vector list of all the jump times
 jump_list = pts_tau(:);

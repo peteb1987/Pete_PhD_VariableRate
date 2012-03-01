@@ -80,7 +80,7 @@ figure(5), hist([smooth_pts.Ns])
 kiti_pts = kalman_smooth_pts(flags, params, times, filt_part_sets{end});
 
 % Plot Kitagawa results
-f = figure(5);
+f = figure(6);
 plot_results(flags, params, times, observ, tau, type, interp_state, kiti_pts, filt_kd_est, f);
 
 %% Evaluation

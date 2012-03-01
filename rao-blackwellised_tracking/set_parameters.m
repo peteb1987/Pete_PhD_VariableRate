@@ -40,10 +40,12 @@ range_rate_var = 0.1;
 bear_rate_var = (pi/30)^2;
 x_var = 1;
 x_rate_var = 1;
+params.H = [1 0 0 0 0 0; 0 1 0 0 0 0];
 
 %%% Algorithm 
-params.Np = 100;                         % Target number of filtering particles
-% params.S = 50;                          % Number of smoothing trajectories
+params.Np = 50;                            % Target number of filtering particles
+params.Ns = 10;                            % Number of smoothing trajectories
+
 % params.M = 1;
 % params.ppsl_move_time_sd = ...          % Standard deviation for proposal distribution for moving jump times
 %     0.1*(params.rate_shape*params.rate_scale);
