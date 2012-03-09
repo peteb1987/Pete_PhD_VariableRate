@@ -13,7 +13,7 @@ intx = next_state(flags, params, x, w, times'-tau);
 
 % Likelihood
 obs_mean = observation_mean(flags, params, intx, w);
-lhood = log(mvnpdf(observs', obs_mean', params.R));
+lhood = log_mvnpdf(observs', obs_mean', params.R);
 
 end
 

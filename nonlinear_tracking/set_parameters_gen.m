@@ -33,11 +33,11 @@ params.rate_shape = 5;                  % State time gamma distribution shape pa
 params.rate_scale = 1;                  % State time gamma distribution scale parameter (this is "b", or "theta")
 
 % Observations
-range_var = 0.1;10;
-bear_var = (pi/720)^2;(pi/90)^2;
+range_var = 10;
+bear_var = (pi/90)^2;
 elev_var = (pi/90)^2;
-range_rate_var = 0.01;0.1;
-bear_rate_var = (pi/720)^2;(pi/30)^2;
+range_rate_var = 0.1;
+bear_rate_var = (pi/30)^2;
 elev_rate_var = (pi/30)^2;
 x_var = 10;
 x_rate_var = 1;

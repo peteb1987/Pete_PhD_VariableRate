@@ -26,8 +26,10 @@ if flags.space_dim == 2
     % Plot track
     plot(intx(1,:), intx(2,:), 'b', 'linewidth', 3);
     
-    % Plot state/jump points
-    plot(x(1,:), x(2,:), 'g*');
+    if ~isempty(x)
+        % Plot state/jump points
+        plot(x(1,:), x(2,:), 'g*');
+    end
 
     % Plot observations
     if flags.obs_mod == 1
@@ -43,8 +45,10 @@ elseif flags.space_dim == 3
     % Plot track
     plot3(intx(1,:), intx(2,:), intx(3,:), 'b', 'linewidth', 3);
     
-    % Plot state/jump points
-    plot3(x(1,:), x(2,:), x(3,:), 'g*');
+    if ~isempty(x)
+        % Plot state/jump points
+        plot3(x(1,:), x(2,:), x(3,:), 'g*');
+    end
     
     % Plot observations
     if flags.obs_mod == 1
@@ -95,6 +99,8 @@ if flags.obs_vel
 end
 
 if ~isempty(pts)
+    Np = length(pts);
+    
     % Get interpolated states from particles
     pts_intx = cat(3,pts.intx);
     K = size(pts_intx, 2);
@@ -105,6 +111,21 @@ if ~isempty(pts)
     if flags.space_dim == 3
         x3 = squeeze(pts_intx(3,:,:));
         x3dot = squeeze(pts_intx(flags.space_dim+3,:,:));
+    end
+    
+    if flags.obs_vel
+        % Accumulate predicted mean observations
+        pred_obs = zeros(Np, params.obs_dim, K);
+        for ii = 1:Np
+            cpi = 1;
+            for k = 1:K
+                if (cpi<pts(ii).Ns)&&(times(k)>pts(ii).tau(cpi+1))
+                    cpi = cpi + 1;
+                end
+                pred_obs(ii,:,k) = observation_mean(flags, params, pts(ii).intx(:,k), pts(ii).w(:,cpi));
+            end
+        end
+        pred_range_rate = squeeze(pred_obs(:,flags.space_dim+2,:));
     end
     
     % Overlay particles
@@ -120,6 +141,11 @@ if ~isempty(pts)
     
     subplot(7,2,9), hold on
     plot(times(1:K), x2dot);
+    
+    if flags.obs_vel
+        subplot(7,2,10), hold on
+        plot(times(1:K), pred_range_rate);
+    end
     
     if flags.space_dim == 3
         subplot(7,2,11), hold on

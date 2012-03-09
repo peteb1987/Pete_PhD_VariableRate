@@ -1,10 +1,10 @@
 %%% TRACKING PARAMETERS %%%
 
 %%% Miscellaneous %%%
-params.K = 500;                         % Number of time steps
+params.K = 3760;                         % Number of time steps
 params.dt = 0.1;                        % Sampling time (this should only be used for generating data. Otherwise, use sampling times provided)
 params.T = params.dt*params.K;          % Time of last observation
-params.min_speed = 0.5;                 % Minimum speed allowed
+params.min_speed = 50;                 % Minimum speed allowed
 
 % Starting point distribution (assumed known by algorithm)
 % start_state is used by the data generation function (i.e. it's part of the model)
@@ -22,33 +22,33 @@ end
 %%% Model %%%
 
 % Accelerations
-aT = 0.01;
-aN = 1;
-aX = 1;
-aY = 1;
-aZ = 1;
+aT = (3)^2;
+aN = (50)^2;
+aX = (10)^2;
+aY = (10)^2;
+aZ = (10)^2;
 
 % Jump times
-params.rate_shape = 5;                  % State time gamma distribution shape parameter (this is "a", or "k")
-params.rate_scale = 1;                  % State time gamma distribution scale parameter (this is "b", or "theta")
+params.rate_shape = 7;                  % State time gamma distribution shape parameter (this is "a", or "k")
+params.rate_scale = 5;                  % State time gamma distribution scale parameter (this is "b", or "theta")
 
 % Observations
-range_var = 0.1;10;
-bear_var = (pi/720)^2;(pi/90)^2;
-elev_var = (pi/90)^2;
-range_rate_var = 0.01;0.1;
-bear_rate_var = (pi/720)^2;(pi/30)^2;
-elev_rate_var = (pi/30)^2;
+range_var = (100)^2;
+bear_var = (pi/360)^2;
+elev_var = (pi/360)^2;
+range_rate_var = (10)^2;
+bear_rate_var = (pi/360)^2;
+elev_rate_var = (pi/360)^2;
 x_var = 10;
 x_rate_var = 1;
 
 %%% Algorithm 
-params.Np = 50;                         % Target number of filtering particles
+params.Np = 200;                         % Target number of filtering particles
 params.S = 50;                          % Number of smoothing trajectories
 params.M = 1;
 params.ppsl_move_time_sd = ...          % Standard deviation for proposal distribution for moving jump times
     0.1*(params.rate_shape*params.rate_scale);
-params.min_num_ppsl_frames = 20;         % Minimum number of frames over which the UKF-approximated OID proposal is constructed
+params.min_num_ppsl_frames = 1000;         % Minimum number of frames over which the UKF-approximated OID proposal is constructed
 params.prop_ppsl_frames = 0.1;          % Proportion of frames in a window used for acceleration proposal
 
 
@@ -76,6 +76,8 @@ if flags.dyn_mod == 2
     params.rnd_dim = params.state_dim;
 elseif flags.dyn_mod == 1
     params.rnd_dim = params.state_dim/2;
+elseif flags.dyn_mod == 3
+    params.rnd_dim = params.state_dim/2;
 else
     error('unhandled option');
 end
@@ -86,6 +88,8 @@ if flags.space_dim == 2
         cov = [aT, aN];
     elseif flags.dyn_mod == 2
         cov = [aT, aN, aX, aY];
+    elseif flags.dyn_mod == 3
+        cov = [aX, aY];
     else
         error('unhandled option');
     end
@@ -94,6 +98,8 @@ elseif flags.space_dim == 3
         cov = [aT, aN, aN];
     elseif flags.dyn_mod == 2
         cov = [aT, aN, aN, aX, aY, aZ];
+    elseif flags.dyn_mod == 3
+        cov = [aX, aY, aZ];
     else
         error('unhandled option');
     end

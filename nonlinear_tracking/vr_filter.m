@@ -47,7 +47,7 @@ for k = 2:K
     
     % Calculate number of children for each particle
     round_weights = max(1/last_Np, exp(last_weights));
-%     round_weights(last_pts_weights-max(last_pts_weights)<-2000)=0;
+    round_weights(isinf(last_weights)) = 0;
     round_weights = round_weights/sum(round_weights);
     Nchild = systematic_resample(round_weights, params.Np);
 %     Nchild = max(1, floor(last_Np*exp(last_pts_weights)));
@@ -162,6 +162,9 @@ for k = 2:K
     fprintf('*** Completed frame %d, at time %4.3f, using %d particles.\n', k, t, Np);
     
 end
+
+part_sets{K} = pts;
+weight_sets{K} = weights;
 
 end
 

@@ -51,11 +51,11 @@ elseif flags.space_dim == 3
     
 end
 
-x_init = [r_init; v_init];
+% x_init = [r_init; v_init];
+x_init = params.start_state;
 
 % Generate a random set of starting points and accelerations
 start_pos = mvnrnd(repmat(x_init', Np, 1), params.start_var)';
-start_pos(4,:) = max(start_pos(4,:), params.min_speed);
 start_accel = mvnrnd(zeros(Np,dr), params.Q)';
 w_prob = log(mvnpdf(start_accel', zeros(Np,dr), params.Q));
 

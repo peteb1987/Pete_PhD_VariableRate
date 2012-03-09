@@ -2,6 +2,10 @@ function [w_new] = determine_acceleration(flags, params, old_x, new_x, dt)
 %DETERMINE_ACCELERATION Calculate the acceleration vector given two bounding
 %states and times
 
+if (flags.dyn_mod == 1)||(flags.dyn_mod == 3)
+    error('Doesn''t work with that model')
+end
+
 sd = flags.space_dim;
 
 % Get old state

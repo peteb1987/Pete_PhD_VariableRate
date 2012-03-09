@@ -7,7 +7,7 @@ dbstop if error
 % dbstop if warning
 
 % DEFINE RANDOM SEED
-rand_seed = 1;
+rand_seed = 8;
 
 % Set random seed
 s = RandStream('mt19937ar', 'seed', rand_seed);
@@ -15,12 +15,13 @@ RandStream.setDefaultStream(s);
 
 %% Flags and Parameters
 
-flags.gen_data = true;          % true = generate data. false = load real data
+flags.gen_data = false;          % true = generate data. false = load real data
 
 % Tracking model flags
 flags.space_dim = 3;            % 2 for 2D, 3 for 3D
-flags.dyn_mod = 2;              % 1 = tangential and normal accelarations only
+flags.dyn_mod = 1;              % 1 = tangential and normal accelarations only
                                 % 2 = plus linear velocities
+                                % 3 = Cartesian accelerations
 flags.obs_mod = 2;              % 1 = linear gaussian
                                 % 2 = radar with gaussian noise
 
@@ -30,22 +31,35 @@ flags.obs_vel = false;           % true = observations of position and velocity.
 % Use resample-move?
 flags.resam_move = true;
 
-% Set tracking parameters
-set_parameters;
-
 %% Data
 
 if flags.gen_data
+    
+    % Set tracking parameters
+    set_parameters_gen;
+    
     % Generate some data
     [true_x, true_tau, observs, times, true_intx, true_w] = generate_data( flags, params );
 else
-    % Load some data
-    error('You haven''t got any data in the right format yet, chump');
+    
+    % Set tracking parameters
+    set_parameters_bench;
+    
+    % Load in some data
+    [ params, times, observs, true_intx ] = load_benchmark(flags, params);
+    true_tau = [];
+    true_x = [];
+    true_w = [];
 end
 
 % Plot data
 f1 = figure;
 plot_results( flags, params, f1, true_x, true_tau, times, true_intx, observs, [], [], [] );
+
+% %% FUDGE
+% 
+% flags.dyn_mod = 1;
+% set_parameters;
 
 %% Filtering
 
@@ -86,8 +100,8 @@ figure(4), hist([smooth_pts.Ns])
 %% Evaluation
 
 % Evaluate various performance measures
-[ filt_rmse, filt_MAP_rmse ] = filter_errors( flags, params, filt_part_sets, times, true_tau, true_intx );
-[ kiti_mNs, kiti_mospa, kiti_rmse, kiti_MAP_rmse ] = performance_measures( flags, params, filt_part_sets{end}, times, true_tau, true_intx );
+[ filt_rmse, filt_MAP_rmse, corr_filt_rmse ] = filter_errors( flags, params, filt_part_sets, times, true_tau, true_intx );
+[ kiti_mNs, kiti_mospa, kiti_rmse, kiti_MAP_rmse, kiti_corr_rmse] = performance_measures( flags, params, filt_part_sets{end}, times, true_tau, true_intx );
 [ VRPS_mNs, VRPS_mospa, VRPS_rmse, VRPS_MAP_rmse ] = performance_measures( flags, params, smooth_pts, times, true_tau, true_intx );
 
 fprintf(1, 'Number of states: True: %u. Kitigawa: %f. VRPS: %f.\n', length(true_tau), kiti_mNs, VRPS_mNs);

@@ -66,8 +66,10 @@ for ii = 1:S
             % Evaluate past filtering probabilities (stored)
             new_past_lhood = sum(new_pt.lhood(new_start_t_idx:k));
             old_past_lhood = sum(old_pt.lhood(old_start_t_idx:k));
-            new_past_trans_prob = new_pt.tau_prob(new_start_tau_idx) + copy_pt.w_prob(new_start_tau_idx);
-            old_past_trans_prob = old_pt.tau_prob(old_start_tau_idx) + old_pt.w_prob(old_start_tau_idx);
+%             new_past_trans_prob = new_pt.tau_prob(new_start_tau_idx) + copy_pt.w_prob(new_start_tau_idx);
+%             old_past_trans_prob = old_pt.tau_prob(old_start_tau_idx) + old_pt.w_prob(old_start_tau_idx);
+            new_past_trans_prob = copy_pt.w_prob(new_start_tau_idx);
+            old_past_trans_prob = old_pt.w_prob(old_start_tau_idx);
             
             % Calculate jump transition probabilities
             [~, new_jump_trans_prob] = sample_jump_time(flags, params, new_pt.tau(new_start_tau_idx), t, new_pt.tau(new_stop_tau_idx));
@@ -107,96 +109,96 @@ for ii = 1:S
             
         end
         
-        if times(k) < old_pt.tau(end-1)
-            
-            % Now do an MH move on the next changepoint
-            old_start_tau_idx = find_nearest(old_pt.tau, t, false);
-            old_stop_tau_idx = find_nearest(old_pt.tau, t, true);
-            
-            last_tau = old_pt.tau(old_start_tau_idx);
-            next_tau = old_pt.tau(old_stop_tau_idx);
-            future_tau = old_pt.tau(old_stop_tau_idx+1);
-            
-            last_x = old_pt.x(:,old_start_tau_idx);
-            last_w = old_pt.w(:,old_start_tau_idx);
-            
-            % tau proposal
-            tau_replace = inf;
-            while (tau_replace>future_tau-params.dt)||(tau_replace<times(k))
-                tau_replace = normrnd(next_tau, params.ppsl_move_time_sd);
-            end
-            ppsl_tau_prob = log(normpdf(tau_replace, next_tau, params.ppsl_move_time_sd));
-            
-            % Propose a move in the last accelerations
-            [w_replace, ppsl_w_prob, ~] = acceleration_proposal(flags, params, last_tau, last_x, last_w, times(times<tau_replace), observ(:,times<tau_replace));
-            
-            % Calculate state at this jump time
-            x_replace = next_state(flags, params, last_x, w_replace, tau_replace-last_tau);
-            
-            % Calculate reverse proposal probabilities
-            rev_ppsl_tau_prob = log(normpdf(next_tau, tau_replace, params.ppsl_move_time_sd));
-            [~, ~, rev_ppsl_w_prob] = acceleration_proposal(flags, params, last_tau, last_x, last_w, times(times<next_tau), observ(:,times<next_tau));
-            
-            % Proposal probabilities
-            ppsl_prob = ppsl_tau_prob+ppsl_w_prob;
-            rev_ppsl_prob = rev_ppsl_tau_prob + rev_ppsl_w_prob;
-            
-            % Build new pt
-            new_pt = old_pt;
-            new_pt.tau(old_stop_tau_idx) = tau_replace;
-            new_pt.x(:,old_stop_tau_idx) = x_replace;
-            new_pt.w(:,old_start_tau_idx) = w_replace;
-            new_pt.w(:,old_stop_tau_idx) = determine_acceleration(flags, params, new_pt.x(:,old_stop_tau_idx), new_pt.x(:,old_stop_tau_idx+1), new_pt.tau(old_stop_tau_idx+1)-new_pt.tau(old_stop_tau_idx));
-            
-            % Find the indexes for the new particle
-            start_tau_idx = old_start_tau_idx;
-            stop_tau_idx = old_stop_tau_idx;
-            
-            % Calculate jump transition probabilities
-            [~, new_jump1] = sample_jump_time(flags, params, new_pt.tau(start_tau_idx), t, new_pt.tau(stop_tau_idx));
-            [~, old_jump1] = sample_jump_time(flags, params, old_pt.tau(start_tau_idx), t, old_pt.tau(stop_tau_idx));
-            [~, new_jump2] = sample_jump_time(flags, params, new_pt.tau(start_tau_idx), t, new_pt.tau(stop_tau_idx));
-            [~, old_jump2] = sample_jump_time(flags, params, old_pt.tau(start_tau_idx), t, old_pt.tau(stop_tau_idx));
-            old_jump_trans_prob = old_jump1+old_jump2;
-            new_jump_trans_prob = new_jump1+new_jump2;
-            
-            % Calculate accelerations and associated probabilities
-            new_accel_prob = log(mvnpdf(new_pt.w(:,start_tau_idx)', zeros(1,dr), params.Q)) + log(mvnpdf(new_pt.w(:,stop_tau_idx)', zeros(1,dr), params.Q));
-            old_accel_prob = log(mvnpdf(old_pt.w(:,start_tau_idx)', zeros(1,dr), params.Q)) + log(mvnpdf(old_pt.w(:,stop_tau_idx)', zeros(1,dr), params.Q));
-            
-            % Calculate bridging likelihoods
-            start_t_idx = find_nearest(times, new_pt.tau(start_tau_idx), true);
-            stop_t_idx = find_nearest(times, new_pt.tau(stop_tau_idx), false);
-            [new_pt.intx(:,start_t_idx:stop_t_idx), new_pt.lhood(start_t_idx:stop_t_idx)] = ...
-                interpolate_state(flags, params, new_pt.tau(start_tau_idx), new_pt.x(:,start_tau_idx), new_pt.w(:,start_tau_idx), times(start_t_idx:stop_t_idx), observ(:,start_t_idx:stop_t_idx));
-            [old_pt.intx(:,start_t_idx:stop_t_idx), old_pt.lhood(start_t_idx:stop_t_idx)] = ...
-                interpolate_state(flags, params, old_pt.tau(start_tau_idx), old_pt.x(:,start_tau_idx), old_pt.w(:,start_tau_idx), times(start_t_idx:stop_t_idx), observ(:,start_t_idx:stop_t_idx));
-            new_bridge_lhood = sum(new_pt.lhood(start_t_idx:stop_t_idx));
-            old_bridge_lhood = sum(old_pt.lhood(start_t_idx:stop_t_idx));
-            
-            start_t_idx = find_nearest(times, new_pt.tau(start_tau_idx+1), true);
-            stop_t_idx = find_nearest(times, new_pt.tau(stop_tau_idx+1), false);
-            [new_pt.intx(:,start_t_idx:stop_t_idx), new_pt.lhood(start_t_idx:stop_t_idx)] = ...
-                interpolate_state(flags, params, new_pt.tau(start_tau_idx+1), new_pt.x(:,start_tau_idx+1), new_pt.w(:,start_tau_idx+1), times(start_t_idx:stop_t_idx), observ(:,start_t_idx:stop_t_idx));
-            [old_pt.intx(:,start_t_idx:stop_t_idx), old_pt.lhood(start_t_idx:stop_t_idx)] = ...
-                interpolate_state(flags, params, old_pt.tau(start_tau_idx+1), old_pt.x(:,start_tau_idx+1), old_pt.w(:,start_tau_idx+1), times(start_t_idx:stop_t_idx), observ(:,start_t_idx:stop_t_idx));
-            new_bridge_lhood = new_bridge_lhood + sum(new_pt.lhood(start_t_idx:stop_t_idx));
-            old_bridge_lhood = old_bridge_lhood + sum(old_pt.lhood(start_t_idx:stop_t_idx));
-            
-            % Calculate MH acceptance probability
-            acc_prob = (new_bridge_lhood+new_accel_prob+new_jump_trans_prob) ...
-                -(old_bridge_lhood+old_accel_prob+old_jump_trans_prob) ...
-                +(rev_ppsl_prob+ppsl_prob);
-            
-            % Test for acceptance
-            if log(rand) < acc_prob
-                
-                % Keep proposed particle
-                old_pt = new_pt;
-                
-            end
-            
-        end
+%         if times(k) < old_pt.tau(end-1)
+%             
+%             % Now do an MH move on the next changepoint
+%             old_start_tau_idx = find_nearest(old_pt.tau, t, false);
+%             old_stop_tau_idx = find_nearest(old_pt.tau, t, true);
+%             
+%             last_tau = old_pt.tau(old_start_tau_idx);
+%             next_tau = old_pt.tau(old_stop_tau_idx);
+%             future_tau = old_pt.tau(old_stop_tau_idx+1);
+%             
+%             last_x = old_pt.x(:,old_start_tau_idx);
+%             last_w = old_pt.w(:,old_start_tau_idx);
+%             
+%             % tau proposal
+%             tau_replace = inf;
+%             while (tau_replace>future_tau-params.dt)||(tau_replace<times(k))
+%                 tau_replace = normrnd(next_tau, params.ppsl_move_time_sd);
+%             end
+%             ppsl_tau_prob = log(normpdf(tau_replace, next_tau, params.ppsl_move_time_sd));
+%             
+%             % Propose a move in the last accelerations
+%             [w_replace, ppsl_w_prob, ~] = acceleration_proposal(flags, params, last_tau, last_x, last_w, times(times<tau_replace), observ(:,times<tau_replace));
+%             
+%             % Calculate state at this jump time
+%             x_replace = next_state(flags, params, last_x, w_replace, tau_replace-last_tau);
+%             
+%             % Calculate reverse proposal probabilities
+%             rev_ppsl_tau_prob = log(normpdf(next_tau, tau_replace, params.ppsl_move_time_sd));
+%             [~, ~, rev_ppsl_w_prob] = acceleration_proposal(flags, params, last_tau, last_x, last_w, times(times<next_tau), observ(:,times<next_tau));
+%             
+%             % Proposal probabilities
+%             ppsl_prob = ppsl_tau_prob+ppsl_w_prob;
+%             rev_ppsl_prob = rev_ppsl_tau_prob + rev_ppsl_w_prob;
+%             
+%             % Build new pt
+%             new_pt = old_pt;
+%             new_pt.tau(old_stop_tau_idx) = tau_replace;
+%             new_pt.x(:,old_stop_tau_idx) = x_replace;
+%             new_pt.w(:,old_start_tau_idx) = w_replace;
+%             new_pt.w(:,old_stop_tau_idx) = determine_acceleration(flags, params, new_pt.x(:,old_stop_tau_idx), new_pt.x(:,old_stop_tau_idx+1), new_pt.tau(old_stop_tau_idx+1)-new_pt.tau(old_stop_tau_idx));
+%             
+%             % Find the indexes for the new particle
+%             start_tau_idx = old_start_tau_idx;
+%             stop_tau_idx = old_stop_tau_idx;
+%             
+%             % Calculate jump transition probabilities
+%             [~, new_jump1] = sample_jump_time(flags, params, new_pt.tau(start_tau_idx), t, new_pt.tau(stop_tau_idx));
+%             [~, old_jump1] = sample_jump_time(flags, params, old_pt.tau(start_tau_idx), t, old_pt.tau(stop_tau_idx));
+%             [~, new_jump2] = sample_jump_time(flags, params, new_pt.tau(start_tau_idx), t, new_pt.tau(stop_tau_idx));
+%             [~, old_jump2] = sample_jump_time(flags, params, old_pt.tau(start_tau_idx), t, old_pt.tau(stop_tau_idx));
+%             old_jump_trans_prob = old_jump1+old_jump2;
+%             new_jump_trans_prob = new_jump1+new_jump2;
+%             
+%             % Calculate accelerations and associated probabilities
+%             new_accel_prob = log(mvnpdf(new_pt.w(:,start_tau_idx)', zeros(1,dr), params.Q)) + log(mvnpdf(new_pt.w(:,stop_tau_idx)', zeros(1,dr), params.Q));
+%             old_accel_prob = log(mvnpdf(old_pt.w(:,start_tau_idx)', zeros(1,dr), params.Q)) + log(mvnpdf(old_pt.w(:,stop_tau_idx)', zeros(1,dr), params.Q));
+%             
+%             % Calculate bridging likelihoods
+%             start_t_idx = find_nearest(times, new_pt.tau(start_tau_idx), true);
+%             stop_t_idx = find_nearest(times, new_pt.tau(stop_tau_idx), false);
+%             [new_pt.intx(:,start_t_idx:stop_t_idx), new_pt.lhood(start_t_idx:stop_t_idx)] = ...
+%                 interpolate_state(flags, params, new_pt.tau(start_tau_idx), new_pt.x(:,start_tau_idx), new_pt.w(:,start_tau_idx), times(start_t_idx:stop_t_idx), observ(:,start_t_idx:stop_t_idx));
+%             [old_pt.intx(:,start_t_idx:stop_t_idx), old_pt.lhood(start_t_idx:stop_t_idx)] = ...
+%                 interpolate_state(flags, params, old_pt.tau(start_tau_idx), old_pt.x(:,start_tau_idx), old_pt.w(:,start_tau_idx), times(start_t_idx:stop_t_idx), observ(:,start_t_idx:stop_t_idx));
+%             new_bridge_lhood = sum(new_pt.lhood(start_t_idx:stop_t_idx));
+%             old_bridge_lhood = sum(old_pt.lhood(start_t_idx:stop_t_idx));
+%             
+%             start_t_idx = find_nearest(times, new_pt.tau(start_tau_idx+1), true);
+%             stop_t_idx = find_nearest(times, new_pt.tau(stop_tau_idx+1), false);
+%             [new_pt.intx(:,start_t_idx:stop_t_idx), new_pt.lhood(start_t_idx:stop_t_idx)] = ...
+%                 interpolate_state(flags, params, new_pt.tau(start_tau_idx+1), new_pt.x(:,start_tau_idx+1), new_pt.w(:,start_tau_idx+1), times(start_t_idx:stop_t_idx), observ(:,start_t_idx:stop_t_idx));
+%             [old_pt.intx(:,start_t_idx:stop_t_idx), old_pt.lhood(start_t_idx:stop_t_idx)] = ...
+%                 interpolate_state(flags, params, old_pt.tau(start_tau_idx+1), old_pt.x(:,start_tau_idx+1), old_pt.w(:,start_tau_idx+1), times(start_t_idx:stop_t_idx), observ(:,start_t_idx:stop_t_idx));
+%             new_bridge_lhood = new_bridge_lhood + sum(new_pt.lhood(start_t_idx:stop_t_idx));
+%             old_bridge_lhood = old_bridge_lhood + sum(old_pt.lhood(start_t_idx:stop_t_idx));
+%             
+%             % Calculate MH acceptance probability
+%             acc_prob = (new_bridge_lhood+new_accel_prob+new_jump_trans_prob) ...
+%                 -(old_bridge_lhood+old_accel_prob+old_jump_trans_prob) ...
+%                 +(rev_ppsl_prob+ppsl_prob);
+%             
+%             % Test for acceptance
+%             if log(rand) < acc_prob
+%                 
+%                 % Keep proposed particle
+%                 old_pt = new_pt;
+%                 
+%             end
+%             
+%         end
         
     end
     
