@@ -29,13 +29,13 @@ aY = (10)^2;
 aZ = (10)^2;
 
 % Jump times
-params.rate_shape = 7;                  % State time gamma distribution shape parameter (this is "a", or "k")
-params.rate_scale = 5;                  % State time gamma distribution scale parameter (this is "b", or "theta")
+params.rate_shape = 6;                  % State time gamma distribution shape parameter (this is "a", or "k")
+params.rate_scale = 4;                  % State time gamma distribution scale parameter (this is "b", or "theta")
 
 % Observations
 range_var = (100)^2;
 bear_var = (pi/360)^2;
-elev_var = (pi/360)^2;
+elev_var = (pi/1440)^2;(pi/360)^2;
 range_rate_var = (10)^2;
 bear_rate_var = (pi/360)^2;
 elev_rate_var = (pi/360)^2;

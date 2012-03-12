@@ -1,8 +1,8 @@
-function [ rmse, MAP_rmse, corr_rmse ] = filter_errors( flags, params, filt_part_sets, times, true_tau, true_intx )
+function [ rmse, MAP_rmse, corr_rmse ] = filter_errors( flags, params, filt_part_sets, filt_weight_sets, times_array, true_tau, true_intx )
 %FILTER_ERRORS Calculate MMSE and MAP errors of filtering estimates
 
 sd = flags.space_dim;
-K = length(times);
+K = length(times_array);
 
 rmse.pos_over_time = zeros(1, K);
 rmse.vel_over_time = zeros(1, K);
@@ -12,15 +12,20 @@ MAP_rmse.pos_over_time = zeros(1, K);
 MAP_rmse.vel_over_time = zeros(1, K);
 
 
-for k = 1:K
+for k = 2:K
     
     pts = filt_part_sets{k};
+    wts = filt_weight_sets{k};
+%     if k == 1
+%         Np = length(pts); wts = log(ones(1,Np)/Np);
+%     end
     
     % Count particles
     Np = length(pts);
     
     % Calculate RMSEs for MMSE estimate
-    intx = mean(cat(3, pts.intx),3);
+%     intx = mean(cat(3, pts.intx),3);
+    intx = squeeze(sum(bsxfun(@times, permute(cat(3, pts.intx),[3,1,2]), exp(wts)), 1));
     error = abs(true_intx(:,k) - intx(:,k));
     rmse.pos_over_time(k) = sqrt(mean( sum(error(1:sd,:,:).^2,1), 3));
     rmse.vel_over_time(k) = sqrt(mean( sum(error(sd+1:2*sd,:,:).^2,1), 3));
@@ -29,10 +34,11 @@ for k = 1:K
     if (flags.dyn_mod == 2)
         pts_intx = cat(3, pts.intx);
         for ii = 1:Np
-            cpi = find(pts(ii).tau==max(pts(ii).tau(pts(ii).tau<times(k))));
+            cpi = find(pts(ii).tau==max(pts(ii).tau(pts(ii).tau<times_array(k))));
             pts_intx(sd+1:2*sd, k, ii) = pts_intx(sd+1:2*sd, k, ii) + pts(ii).w(sd+1:2*sd,cpi);
         end
-        intx = mean(pts_intx, 3);
+%         intx = mean(pts_intx, 3);
+        intx = squeeze(sum(bsxfun(@times, permute(pts_intx,[3,1,2]), exp(wts)), 1));
         error = abs(true_intx(:,k) - intx(:,k));
         corr_rmse.pos_over_time(k) = sqrt( sum(error(1:sd,:).^2,1));
         corr_rmse.vel_over_time(k) = sqrt( sum(error(sd+1:2*sd,:).^2,1));

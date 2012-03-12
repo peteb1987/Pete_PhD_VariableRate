@@ -17,7 +17,7 @@ test_flag = 1;
 %% Flags and Parameters
 
 % Tracking model flags
-flags.space_dim = 3;            % 2 for 2D, 3 for 3D
+flags.space_dim = 2;            % 2 for 2D, 3 for 3D
 flags.obs_mod = 2;              % 1 = linear gaussian
                                 % 2 = radar with gaussian noise
 

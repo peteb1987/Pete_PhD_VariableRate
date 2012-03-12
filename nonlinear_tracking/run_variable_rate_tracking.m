@@ -7,7 +7,7 @@ dbstop if error
 % dbstop if warning
 
 % DEFINE RANDOM SEED
-rand_seed = 8;
+rand_seed = 3;
 
 % Set random seed
 s = RandStream('mt19937ar', 'seed', rand_seed);
@@ -19,7 +19,7 @@ flags.gen_data = false;          % true = generate data. false = load real data
 
 % Tracking model flags
 flags.space_dim = 3;            % 2 for 2D, 3 for 3D
-flags.dyn_mod = 1;              % 1 = tangential and normal accelarations only
+flags.dyn_mod = 3;              % 1 = tangential and normal accelarations only
                                 % 2 = plus linear velocities
                                 % 3 = Cartesian accelerations
 flags.obs_mod = 2;              % 1 = linear gaussian
@@ -72,6 +72,10 @@ plot_results( flags, params, f1, true_x, true_tau, times, true_intx, observs, []
 % Plot filtering results
 plot_results( flags, params, f1, true_x, true_tau, times, true_intx, observs, filt_part_sets{params.K}, filt_kd_times, filt_jump_kdest );
 
+% Resample final particles
+[~, parents] = systematic_resample(exp(filt_weight_sets{end}), params.Np);
+kita_pts = filt_part_sets{end}(parents);
+
 % Histogram number of states
 figure(3), hist([filt_part_sets{params.K}.Ns])
 
@@ -100,8 +104,8 @@ figure(4), hist([smooth_pts.Ns])
 %% Evaluation
 
 % Evaluate various performance measures
-[ filt_rmse, filt_MAP_rmse, corr_filt_rmse ] = filter_errors( flags, params, filt_part_sets, times, true_tau, true_intx );
-[ kiti_mNs, kiti_mospa, kiti_rmse, kiti_MAP_rmse, kiti_corr_rmse] = performance_measures( flags, params, filt_part_sets{end}, times, true_tau, true_intx );
+[ filt_rmse, filt_MAP_rmse, corr_filt_rmse ] = filter_errors( flags, params, filt_part_sets, filt_weight_sets, times, true_tau, true_intx );
+[ kiti_mNs, kiti_mospa, kiti_rmse, kiti_MAP_rmse, kiti_corr_rmse] = performance_measures( flags, params, kita_pts, times, true_tau, true_intx );
 [ VRPS_mNs, VRPS_mospa, VRPS_rmse, VRPS_MAP_rmse ] = performance_measures( flags, params, smooth_pts, times, true_tau, true_intx );
 
 fprintf(1, 'Number of states: True: %u. Kitigawa: %f. VRPS: %f.\n', length(true_tau), kiti_mNs, VRPS_mNs);

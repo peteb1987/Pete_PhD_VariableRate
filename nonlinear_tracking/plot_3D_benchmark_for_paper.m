@@ -6,8 +6,8 @@ figure, hold on,
 % % Put an x on the origin
 % plot(0, 0, 'xk', 'markersize', 10);
 
-xlim([2E4, 6.5E4]); ylim([-1E4 3.5E4]); zlim([0 1E4]);
-view(-80, 50)
+xlim([3E4, 7.5E4]); ylim([-1E4 3.5E4]); zlim([0 .25E4]);
+view(-80, 75)
 
 % Plot track
 plot3(intx(1,:), intx(2,:), intx(3,:), 'k:', 'linewidth', 1);
