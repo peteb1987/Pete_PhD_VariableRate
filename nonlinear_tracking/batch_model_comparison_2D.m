@@ -26,6 +26,8 @@ flags.resam_move = true;
 
 for r = 1:num_seeds;
     
+    r
+    
     %% Model 1, no velocities
     
     % Set random seed
@@ -42,6 +44,10 @@ for r = 1:num_seeds;
     true_tau = [];
     true_x = [];
     true_w = [];
+    
+    % Set random seed
+    s = RandStream('mt19937ar', 'seed', r);
+    RandStream.setDefaultStream(s);
     
     % Filter
     [ filt_part_sets, filt_weight_sets ] = vr_filter( flags, params, times, observs );
@@ -71,6 +77,10 @@ for r = 1:num_seeds;
     true_x = [];
     true_w = [];
     
+    % Set random seed
+    s = RandStream('mt19937ar', 'seed', r);
+    RandStream.setDefaultStream(s);
+    
     % Filter
     [ filt_part_sets, filt_weight_sets ] = vr_filter( flags, params, times, observs );
     [~, parents] = systematic_resample(exp(filt_weight_sets{end}), params.Np); kita_pts = filt_part_sets{end}(parents);
@@ -97,6 +107,10 @@ for r = 1:num_seeds;
     true_tau = [];
     true_x = [];
     true_w = [];
+    
+    % Set random seed
+    s = RandStream('mt19937ar', 'seed', r);
+    RandStream.setDefaultStream(s);
     
     % Filter
     [ filt_part_sets, filt_weight_sets ] = vr_filter( flags, params, times, observs );
@@ -125,6 +139,10 @@ for r = 1:num_seeds;
     true_x = [];
     true_w = [];
     
+    % Set random seed
+    s = RandStream('mt19937ar', 'seed', r);
+    RandStream.setDefaultStream(s);
+    
     % Filter
     [ filt_part_sets, filt_weight_sets ] = vr_filter( flags, params, times, observs );
     [~, parents] = systematic_resample(exp(filt_weight_sets{end}), params.Np); kita_pts = filt_part_sets{end}(parents);
@@ -152,6 +170,10 @@ for r = 1:num_seeds;
 %     true_x = [];
 %     true_w = [];
 %     
+%     % Set random seed
+%     s = RandStream('mt19937ar', 'seed', r);
+%     RandStream.setDefaultStream(s);
+%     
 %     % Filter
 %     [ filt_part_sets, filt_weight_sets ] = vr_filter( flags, params, times, observs );
 %     [~, parents] = systematic_resample(exp(filt_weight_sets{end}), params.Np); kita_pts = filt_part_sets{end}(parents);
@@ -165,4 +187,4 @@ for r = 1:num_seeds;
     
 end
 
-save('2Dmodel_comparison_results.mat', 'results');
+save('test_model_comparison_results.mat', 'results');

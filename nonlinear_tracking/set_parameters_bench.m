@@ -1,7 +1,7 @@
 %%% TRACKING PARAMETERS %%%
 
 %%% Miscellaneous %%%
-params.K = 3760;                         % Number of time steps
+params.K = 500;                         % Number of time steps
 params.dt = 0.1;                        % Sampling time (this should only be used for generating data. Otherwise, use sampling times provided)
 params.T = params.dt*params.K;          % Time of last observation
 params.min_speed = 50;                 % Minimum speed allowed
@@ -22,7 +22,7 @@ end
 %%% Model %%%
 
 % Accelerations
-aT = (3)^2;
+aT = (10)^2;
 aN = (50)^2;
 aX = (10)^2;
 aY = (10)^2;
@@ -35,16 +35,19 @@ params.rate_scale = 4;                  % State time gamma distribution scale pa
 % Observations
 range_var = (100)^2;
 bear_var = (pi/360)^2;
-elev_var = (pi/1440)^2;(pi/360)^2;
+elev_var = (pi/1440)^2;
+% range_var = (500)^2;
+% bear_var = (pi/720)^2;
+% elev_var = (pi/720)^2;
 range_rate_var = (10)^2;
 bear_rate_var = (pi/360)^2;
 elev_rate_var = (pi/360)^2;
-x_var = 10;
-x_rate_var = 1;
+x_var = (1000)^2;
+x_rate_var = (10)^2;
 
 %%% Algorithm 
 params.Np = 200;                         % Target number of filtering particles
-params.S = 50;                          % Number of smoothing trajectories
+params.S = 200;                          % Number of smoothing trajectories
 params.M = 1;
 params.ppsl_move_time_sd = ...          % Standard deviation for proposal distribution for moving jump times
     0.1*(params.rate_shape*params.rate_scale);

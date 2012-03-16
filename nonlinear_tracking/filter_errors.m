@@ -54,8 +54,8 @@ for k = 2:K
     % Calculate RMSEs for MAP estimate
     intx = pts(MAP_ind).intx;
     error = abs(bsxfun(@minus, true_intx(:,k,:), intx(:,k,:)));
-    MAP_rmse.pos_over_time = sqrt(mean( sum(error(1:sd,:,:).^2,1), 3));
-    MAP_rmse.vel_over_time = sqrt(mean( sum(error(sd+1:2*sd,:,:).^2,1), 3));
+    MAP_rmse.pos_over_time(k) = sqrt(mean( sum(error(1:sd,:,:).^2,1), 3));
+    MAP_rmse.vel_over_time(k) = sqrt(mean( sum(error(sd+1:2*sd,:,:).^2,1), 3));
 
 end
 

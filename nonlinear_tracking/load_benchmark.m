@@ -16,8 +16,9 @@ times = xyz_targ(10,:)';
 factor = 20;
 
 times = times(factor:factor:end);
+times = times - times(1);
 params.K = length(times);
-params.dt = times(1);
+params.dt = times(2)-times(1);
 params.T = times(end);
 true_x = true_x(:,factor:factor:end);
 

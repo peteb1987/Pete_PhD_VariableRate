@@ -19,10 +19,10 @@ flags.gen_data = false;          % true = generate data. false = load real data
 
 % Tracking model flags
 flags.space_dim = 3;            % 2 for 2D, 3 for 3D
-flags.dyn_mod = 3;              % 1 = tangential and normal accelarations only
+flags.dyn_mod = 2;              % 1 = tangential and normal accelarations only
                                 % 2 = plus linear velocities
                                 % 3 = Cartesian accelerations
-flags.obs_mod = 2;              % 1 = linear gaussian
+flags.obs_mod = 1;              % 1 = linear gaussian
                                 % 2 = radar with gaussian noise
 
 % Observed velocity?
@@ -82,7 +82,8 @@ figure(3), hist([filt_part_sets{params.K}.Ns])
 %% Smoothing
 
 % Call MCMC smoothing algorithm
-[ smooth_pts ] = mcmc_vr_smoother( flags, params, filt_part_sets, filt_weight_sets, times, observs );
+% [ smooth_pts ] = mcmc_vr_smoother( flags, params, filt_part_sets, filt_weight_sets, times, observs );
+[ smooth_pts ] = mcmc_vr_smoother_newsample( flags, params, filt_part_sets, filt_weight_sets, times, observs );
 % [ smooth_pts ] = vr_smoother( flags, params, filt_part_sets, times, observs );
 
 % Calculate jump time kernel density estimate
@@ -106,7 +107,7 @@ figure(4), hist([smooth_pts.Ns])
 % Evaluate various performance measures
 [ filt_rmse, filt_MAP_rmse, corr_filt_rmse ] = filter_errors( flags, params, filt_part_sets, filt_weight_sets, times, true_tau, true_intx );
 [ kiti_mNs, kiti_mospa, kiti_rmse, kiti_MAP_rmse, kiti_corr_rmse] = performance_measures( flags, params, kita_pts, times, true_tau, true_intx );
-[ VRPS_mNs, VRPS_mospa, VRPS_rmse, VRPS_MAP_rmse ] = performance_measures( flags, params, smooth_pts, times, true_tau, true_intx );
+[ VRPS_mNs, VRPS_mospa, VRPS_rmse, VRPS_MAP_rmse, VRPS_corr_rmse ] = performance_measures( flags, params, smooth_pts, times, true_tau, true_intx );
 
 fprintf(1, 'Number of states: True: %u. Kitigawa: %f. VRPS: %f.\n', length(true_tau), kiti_mNs, VRPS_mNs);
 fprintf(1, 'MMSE Position errors: Filter: %f. Kitigawa: %f. VRPS: %f.\n', filt_rmse.pos, kiti_rmse.pos, VRPS_rmse.pos);

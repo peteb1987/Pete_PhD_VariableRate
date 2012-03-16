@@ -3,8 +3,8 @@ function [ intx, lhood ] = interpolate_state( flags, params, tau, x, w, times, o
 %recent state and the current accelerations. Also calculate the likelihood.
 
 if isempty(times)
-    intx = zeros(4,0);
-    lhood = [];
+    intx = zeros(params.state_dim,0);
+    lhood = zeros(0,1);
     return
 end
 

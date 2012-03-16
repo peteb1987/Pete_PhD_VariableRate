@@ -1,4 +1,4 @@
-function [ pts ] = mcmc_vr_smoother( flags, params, filt_part_sets, filt_weight_sets, times, observ )
+function [ pts ] = mcmc_vr_smoother_newsample( flags, params, filt_part_sets, filt_weight_sets, times, observ )
 %MCMC_VR_SMOOTHER Smoother for variable rate models using MCMC method.
 
 % Set some local variables
@@ -65,27 +65,78 @@ for ii = 1:S
             new_start_t_idx = find_nearest(times, new_pt.tau(new_start_tau_idx), true);
             new_stop_t_idx = find_nearest(times, new_pt.tau(new_stop_tau_idx), false);
             
-            % Evaluate past filtering probabilities (stored)
-            new_past_lhood = sum(new_pt.lhood(new_start_t_idx:k));
-            old_past_lhood = sum(old_pt.lhood(old_start_t_idx:k));
-%             new_past_trans_prob = new_pt.tau_prob(new_start_tau_idx) + copy_pt.w_prob(new_start_tau_idx);
-%             old_past_trans_prob = old_pt.tau_prob(old_start_tau_idx) + old_pt.w_prob(old_start_tau_idx);
-            new_past_trans_prob = copy_pt.w_prob(new_start_tau_idx);
-            old_past_trans_prob = old_pt.w_prob(old_start_tau_idx);
+            if (new_start_tau_idx>1)&&(old_start_tau_idx>1)
+                
+                % Propose a change in the previous changepoint time
+                tau_replace = inf;
+                while (tau_replace>times(k))||(tau_replace<new_pt.tau(new_start_tau_idx-1))
+                    tau_replace = normrnd(new_pt.tau(new_start_tau_idx), params.ppsl_move_time_sd);
+                end
+                %             ppsl_tau_prob = log(normpdf(tau_replace, last_tau, params.ppsl_move_time_sd));
+                new_pt.tau(new_start_tau_idx) = tau_replace;
+                
+                % Calculate previous changepoint probabilities
+                [~, new_past_cptime_prob] = sample_jump_time(flags, params, new_pt.tau(new_start_tau_idx-1), [], new_pt.tau(new_start_tau_idx));
+                [~, old_past_cptime_prob] = sample_jump_time(flags, params, old_pt.tau(old_start_tau_idx-1), [], old_pt.tau(old_start_tau_idx));
+                new_pt.tau_prob(new_start_tau_idx) = new_past_cptime_prob;
+                
+                % Propose a new ante-previous parameter
+                [w_replace, ~, ~] = acceleration_proposal(flags, params, new_pt.tau(new_start_tau_idx-1), new_pt.x(:,new_start_tau_idx-1), new_pt.w(:,new_start_tau_idx-1), times(1:new_start_t_idx-1), observ(:,1:new_start_t_idx-1));
+                new_pt.w(:,new_start_tau_idx-1) = w_replace;
+                new_pt.x(:,new_start_tau_idx) = next_state(flags, params,  new_pt.x(:,new_start_tau_idx-1), new_pt.w(:,new_start_tau_idx-1), new_pt.tau(new_start_tau_idx)-new_pt.tau(new_start_tau_idx-1));
+                
+                % Calculate ante-previous parameter probabilities
+                new_past_param_prob = log(mvnpdf(new_pt.w(:,new_start_tau_idx)', zeros(1,dr), params.Q));
+                old_past_param_prob = log(mvnpdf(old_pt.w(:,old_start_tau_idx)', zeros(1,dr), params.Q));
+                new_pt.w_prob(new_start_tau_idx) = new_past_param_prob;
+                
+                % Update time indexes
+                new_start_t_idx = find_nearest(times, new_pt.tau(new_start_tau_idx), true);
+                new_past_start_t_idx = find_nearest(times, new_pt.tau(new_start_tau_idx-1), true);
+                old_past_start_t_idx = find_nearest(times, old_pt.tau(old_start_tau_idx-1), true);
+                
+                % Likelihood bits
+                new_past_replaced_lhood = sum(new_pt.lhood(new_past_start_t_idx:new_start_t_idx));
+                old_past_replaced_lhood = sum(old_pt.lhood(old_past_start_t_idx:old_start_t_idx));
+                
+                [new_pt.intx(:,new_past_start_t_idx:new_start_t_idx-1), new_pt.lhood(new_past_start_t_idx:new_start_t_idx-1)] = ...
+                    interpolate_state(flags, params, new_pt.tau(new_start_tau_idx-1), new_pt.x(:,new_start_tau_idx-1), w_replace, times(new_past_start_t_idx:new_start_t_idx-1), observ(:,new_past_start_t_idx:new_start_t_idx-1));
+                w_old = old_pt.w(:,old_start_tau_idx-1);
+                [old_pt.intx(:,old_past_start_t_idx:old_start_t_idx-1), old_pt.lhood(old_past_start_t_idx:old_start_t_idx-1)] = ...
+                    interpolate_state(flags, params, old_pt.tau(old_start_tau_idx-1), old_pt.x(:,old_start_tau_idx-1), w_old, times(old_past_start_t_idx:old_start_t_idx-1), observ(:,old_past_start_t_idx:old_start_t_idx-1));
+                new_past_bridge_lhood = sum(new_pt.lhood(new_past_start_t_idx:new_start_t_idx-1));
+                old_past_bridge_lhood = sum(old_pt.lhood(old_past_start_t_idx:old_start_t_idx-1));
+                
+            else
+                
+                new_past_cptime_prob = 0;
+                old_past_cptime_prob = 0;
+                new_past_replaced_lhood = 0;
+                old_past_replaced_lhood = 0;
+                new_past_bridge_lhood = 0;
+                old_past_bridge_lhood = 0;
             
-            % Calculate jump transition probabilities
-            [~, new_jump_trans_prob] = sample_jump_time(flags, params, new_pt.tau(new_start_tau_idx), t, new_pt.tau(new_stop_tau_idx));
-            [~, old_jump_trans_prob] = sample_jump_time(flags, params, old_pt.tau(old_start_tau_idx), t, old_pt.tau(old_stop_tau_idx));
+            end
+            
+            % Evaluate replaced filtering probabilities (stored)
+            new_replaced_lhood = sum(new_pt.lhood(new_start_t_idx:k));
+            old_replaced_lhood = sum(old_pt.lhood(old_start_t_idx:k));
+            new_replaced_param_prob = new_pt.w_prob(new_start_tau_idx);
+            old_replaced_param_prob = old_pt.w_prob(old_start_tau_idx);
+            
+            % Calculate changepoint transition probabilities
+            [~, new_cptime_prob] = sample_jump_time(flags, params, new_pt.tau(new_start_tau_idx), t, new_pt.tau(new_stop_tau_idx));
+            [~, old_cptime_prob] = sample_jump_time(flags, params, old_pt.tau(old_start_tau_idx), t, old_pt.tau(old_stop_tau_idx));
             
             % Calculate accelerations and associated probabilities
             w_new = determine_acceleration(flags, params, new_pt.x(:,new_start_tau_idx), new_pt.x(:,new_stop_tau_idx), new_pt.tau(new_stop_tau_idx)-new_pt.tau(new_start_tau_idx));
             w_old = determine_acceleration(flags, params, old_pt.x(:,old_start_tau_idx), old_pt.x(:,old_stop_tau_idx), old_pt.tau(old_stop_tau_idx)-old_pt.tau(old_start_tau_idx));
-            new_accel_prob = log(mvnpdf(w_new', zeros(1,dr), params.Q));
-            old_accel_prob = log(mvnpdf(w_old', zeros(1,dr), params.Q));
+            new_param_prob = log(mvnpdf(w_new', zeros(1,dr), params.Q));
+            old_param_prob = log(mvnpdf(w_old', zeros(1,dr), params.Q));
             
             new_pt.w(:,new_start_tau_idx) = w_new;
-            new_pt.tau_prob(new_start_tau_idx) = new_jump_trans_prob;
-            new_pt.w_prob(new_start_tau_idx) = new_accel_prob;
+            new_pt.tau_prob(new_start_tau_idx) = new_cptime_prob;
+            new_pt.w_prob(new_start_tau_idx) = new_param_prob;
             
             % Calculate bridging likelihoods
             [new_pt.intx(:,new_start_t_idx:new_stop_t_idx), new_pt.lhood(new_start_t_idx:new_stop_t_idx)] = ...
@@ -96,10 +147,10 @@ for ii = 1:S
             old_bridge_lhood = sum(old_pt.lhood(old_start_t_idx:old_stop_t_idx));
             
             % Calculate MH acceptance probability
-            acc_prob = (new_bridge_lhood+new_accel_prob+new_jump_trans_prob) ...
-                -(old_bridge_lhood+old_accel_prob+old_jump_trans_prob) ...
-                +(old_past_lhood+old_past_trans_prob) ...
-                -(new_past_lhood+new_past_trans_prob);
+            acc_prob = (new_bridge_lhood+new_param_prob+new_cptime_prob+new_past_cptime_prob+new_past_param_prob+new_past_bridge_lhood) ...
+                      -(old_bridge_lhood+old_param_prob+old_cptime_prob+old_past_cptime_prob+old_past_param_prob+old_past_bridge_lhood) ...
+                      +(old_replaced_lhood+old_replaced_param_prob+old_past_replaced_lhood) ...
+                      -(new_replaced_lhood+new_replaced_param_prob+new_past_replaced_lhood);
             
             % Test for acceptance
             if log(rand) < acc_prob
