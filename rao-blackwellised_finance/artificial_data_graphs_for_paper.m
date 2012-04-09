@@ -162,3 +162,15 @@ ylim([-0.2 0.3]);
 wid = 4.5; hei = 2;
 remove_whitespace_for_saveas;
 print(fig, '-dpdf', 'example_smoother_state.pdf');
+
+%%
+
+figure, plot(times, mean(cat(1,results.VRPS.unique_over_time), 1))
+close all
+figure, hold on,
+plot(times, mean(cat(1,results.VRPS.unique_over_time), 1), 'g')
+plot(times, mean(cat(1,results.kita.unique_over_time), 1), '--b')
+
+wid = 4; hei = 3;
+remove_whitespace_for_saveas;
+print(gcf, '-dpdf', ['finance_unique_particles.pdf']);

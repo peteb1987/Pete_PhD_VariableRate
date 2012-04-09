@@ -33,8 +33,8 @@ params.rate_shape = 6;                  % State time gamma distribution shape pa
 params.rate_scale = 4;                  % State time gamma distribution scale parameter (this is "b", or "theta")
 
 % Observations
-range_var = (100)^2;
-bear_var = (pi/360)^2;
+range_var = (200)^2;
+bear_var = (pi/180)^2;
 elev_var = (pi/1440)^2;
 % range_var = (500)^2;
 % bear_var = (pi/720)^2;
@@ -46,12 +46,12 @@ x_var = (1000)^2;
 x_rate_var = (10)^2;
 
 %%% Algorithm 
-params.Np = 200;                         % Target number of filtering particles
-params.S = 200;                          % Number of smoothing trajectories
+params.Np = 50;                         % Target number of filtering particles
+params.S = 50;                          % Number of smoothing trajectories
 params.M = 1;
 params.ppsl_move_time_sd = ...          % Standard deviation for proposal distribution for moving jump times
     0.1*(params.rate_shape*params.rate_scale);
-params.min_num_ppsl_frames = 1000;         % Minimum number of frames over which the UKF-approximated OID proposal is constructed
+params.min_num_ppsl_frames = 20;         % Minimum number of frames over which the UKF-approximated OID proposal is constructed
 params.prop_ppsl_frames = 0.1;          % Proportion of frames in a window used for acceleration proposal
 
 

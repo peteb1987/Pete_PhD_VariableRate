@@ -33,9 +33,14 @@ for k = 1:K
                     % Compare jump sequences
                     if all(tau_ii==tau_jj)
                         
-                        % Particle is not unique, cross it off
-                        uniq(jj) = false;
-                        Nup(k) = Nup(k) - 1;
+                        % Compare start point
+                        if (pts(ii).x(:,1)==pts(jj).x(:,1))
+                            
+                            % Particle is not unique, cross it off
+                            uniq(jj) = false;
+                            Nup(k) = Nup(k) - 1;
+                            
+                        end
                         
                     end
                     

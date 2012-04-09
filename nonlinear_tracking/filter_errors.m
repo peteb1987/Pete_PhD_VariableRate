@@ -1,4 +1,4 @@
-function [ rmse, MAP_rmse, corr_rmse ] = filter_errors( flags, params, filt_part_sets, filt_weight_sets, times_array, true_tau, true_intx )
+function [ rmse, MAP_rmse, corr_rmse ] = filter_errors( flags, params, filt_part_sets, filt_weight_sets, times_array, true_tau, true_w, true_intx )
 %FILTER_ERRORS Calculate MMSE and MAP errors of filtering estimates
 
 sd = flags.space_dim;
@@ -32,6 +32,7 @@ for k = 2:K
     
     % Add drift to velocity and work out RMSE
     if (flags.dyn_mod == 2)
+        % Inferred
         pts_intx = cat(3, pts.intx);
         for ii = 1:Np
             cpi = find(pts(ii).tau==max(pts(ii).tau(pts(ii).tau<times_array(k))));
@@ -39,7 +40,13 @@ for k = 2:K
         end
 %         intx = mean(pts_intx, 3);
         intx = squeeze(sum(bsxfun(@times, permute(pts_intx,[3,1,2]), exp(wts)), 1));
-        error = abs(true_intx(:,k) - intx(:,k));
+        
+        % True
+        mod_true_intx = true_intx(:,k);
+        cpi = find(true_tau==max(true_tau(true_tau<times_array(k))));
+        mod_true_intx(sd+1:2*sd) = mod_true_intx(sd+1:2*sd) + true_w(sd+1:2*sd,cpi);
+        
+        error = abs(mod_true_intx - intx(:,k));
         corr_rmse.pos_over_time(k) = sqrt( sum(error(1:sd,:).^2,1));
         corr_rmse.vel_over_time(k) = sqrt( sum(error(sd+1:2*sd,:).^2,1));
     end

@@ -1,4 +1,4 @@
-function [ mNs, mospa, rmse, MAP_rmse, corr_rmse ] = performance_measures( flags, params, pts, times, true_tau, true_intx )
+function [ mNs, mospa, rmse, MAP_rmse, corr_rmse ] = performance_measures( flags, params, pts, times, true_tau, true_w, true_intx )
 %PERFORMANCE_MEASURES Calculates various performance measures for VRPF/S
 %output
 
@@ -30,6 +30,7 @@ end
 
 % Add drift to velocity and work out RMSE
 if ~isempty(true_intx) && (flags.dyn_mod == 2)
+    % Inferred
     pts_intx = cat(3, pts.intx);
     for ii = 1:Np
         cpi = 1;
@@ -41,7 +42,18 @@ if ~isempty(true_intx) && (flags.dyn_mod == 2)
         end
     end
     intx = mean(pts_intx, 3);
-    error = abs(true_intx - intx);
+    
+    % True
+    mod_true_intx = true_intx;
+    cpi = 1;
+    for kk = 1:K
+        if (cpi<length(true_tau))&&(times(kk)>true_tau(cpi+1))
+            cpi = cpi + 1;
+        end
+        mod_true_intx(sd+1:2*sd, kk) = mod_true_intx(sd+1:2*sd, kk) + true_w(sd+1:2*sd,cpi);
+    end
+    
+    error = abs(mod_true_intx - intx);
     corr_rmse.pos_over_time = sqrt( sum(error(1:sd,:).^2,1));
     corr_rmse.vel_over_time = sqrt( sum(error(sd+1:2*sd,:).^2,1));
     corr_rmse.pos = sqrt(mean(corr_rmse.pos_over_time.^2));
