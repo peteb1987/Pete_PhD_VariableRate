@@ -18,7 +18,7 @@ RandStream.setDefaultStream(s);
 flags.gen_data = true;          % true = generate data. false = load real data
 
 % Tracking model flags
-flags.space_dim = 2;            % 2 for 2D, 3 for 3D
+flags.space_dim = 3;            % 2 for 2D, 3 for 3D
 flags.dyn_mod = 2;              % 1 = tangential and normal accelarations only
                                 % 2 = plus linear velocities
                                 % 3 = Cartesian accelerations

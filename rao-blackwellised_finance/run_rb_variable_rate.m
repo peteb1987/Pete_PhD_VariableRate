@@ -16,7 +16,7 @@ RandStream.setDefaultStream(s);
 %% Flags and Parameters
 
 % Set flags and parameters
-flags.gen_data = false;          % true = generate data. false = load real data
+flags.gen_data = true;          % true = generate data. false = load real data
 
 % Set finance parameters
 set_parameters;

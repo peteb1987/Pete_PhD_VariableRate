@@ -6,12 +6,12 @@ fig = figure(1); clf;
 subplot(2,1,1); hold on;
 plot(times, interp_state(1,:), 'b', 'LineWidth', 2);
 plot(times, observ, 'r', 'LineWidth', 1);
-xlabel('time'), ylabel('x');
+xlabel('time'), ylabel('$x$', 'interpreter', 'latex');
 ylim([-0.01, 0.05]);
 
 subplot(2,1,2); hold on;
 plot(times, interp_state(2,:), 'b', 'LineWidth', 2);
-xlabel('time'), ylabel('x-dot');
+xlabel('time'), ylabel('$\dot{x}$', 'interpreter', 'latex');
 ylim([-0.2, 0.3]);
 
 for tt=1:length(tau)
@@ -100,7 +100,7 @@ plot(times, squeeze(pts_intmu(2,:,:)));
 plot(times, squeeze(pts_intmu(2,:,:)) + 2* sqrt(squeeze(pts_intP(2,2,:,:))), '-.');
 plot(times, squeeze(pts_intmu(2,:,:)) - 2* sqrt(squeeze(pts_intP(2,2,:,:))), '-.');
 plot(times, interp_state(2,:), 'b', 'LineWidth', 2);
-xlabel('time'); ylabel('trend');
+xlabel('time'); ylabel('$\dot{x}$', 'interpreter', 'latex');
 ylim([-0.2 0.3]);
 
 wid = 4.5; hei = 2;
@@ -128,7 +128,7 @@ plot(times, squeeze(pts_intmu(2,:,:)));
 plot(times, squeeze(pts_intmu(2,:,:)) + 2* sqrt(squeeze(pts_intP(2,2,:,:))), '-.');
 plot(times, squeeze(pts_intmu(2,:,:)) - 2* sqrt(squeeze(pts_intP(2,2,:,:))), '-.');
 plot(times, interp_state(2,:), 'b', 'LineWidth', 2);
-xlabel('time'); ylabel('trend');
+xlabel('time'); ylabel('$\dot{x}$', 'interpreter', 'latex');
 ylim([-0.2 0.3]);
 
 wid = 4.5; hei = 2;
@@ -156,7 +156,7 @@ plot(times, squeeze(pts_intmu(2,:,:)));
 plot(times, squeeze(pts_intmu(2,:,:)) + 2* sqrt(squeeze(pts_intP(2,2,:,:))), '-.');
 plot(times, squeeze(pts_intmu(2,:,:)) - 2* sqrt(squeeze(pts_intP(2,2,:,:))), '-.');
 plot(times, interp_state(2,:), 'b', 'LineWidth', 2);
-xlabel('time'); ylabel('trend');
+xlabel('time'); ylabel('$\dot{x}$', 'interpreter', 'latex');
 ylim([-0.2 0.3]);
 
 wid = 4.5; hei = 2;
@@ -165,12 +165,16 @@ print(fig, '-dpdf', 'example_smoother_state.pdf');
 
 %%
 
-figure, plot(times, mean(cat(1,results.VRPS.unique_over_time), 1))
-close all
 figure, hold on,
-plot(times, mean(cat(1,results.VRPS.unique_over_time), 1), 'g')
-plot(times, mean(cat(1,results.kita.unique_over_time), 1), '--b')
+VRPS_test = mean(cat(1,results.VRPS.unique_over_time), 1);
+kita_test = mean(cat(1,results.kita.unique_over_time), 1);
+end_test = 1000;
+plot(times(:,1:end_test), VRPS_test(:,1:end_test), 'g')
+plot(times(:,1:end_test), kita_test(:,1:end_test), '--b')
+xlabel('time'); ylabel('Number of unique particles');
+% orient landscape
 
-wid = 4; hei = 3;
-remove_whitespace_for_saveas;
-print(gcf, '-dpdf', ['finance_unique_particles.pdf']);
+% wid = 4; hei = 3;
+% remove_whitespace_for_saveas;
+% print(gcf, '-dpdf', ['finance_unique_particles.pdf']);
+export_pdf(gcf, 'finance_unique_particles', 4, 3);
