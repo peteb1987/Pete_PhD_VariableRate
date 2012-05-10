@@ -2,6 +2,12 @@ function [ mNs, mospa, rmse, MAP_rmse, corr_rmse ] = performance_measures( flags
 %PERFORMANCE_MEASURES Calculates various performance measures for VRPF/S
 %output
 
+if isempty(pts)
+    [mNs, mospa, rmse.pos, rmse.vel, rmse.pos_over_time, rmse.vel_over_time] = deal([]);
+    [rmse, MAP_rmse, corr_rmse] = deal(rmse);
+    return
+end
+
 sd = flags.space_dim;
 K = params.K;
 
@@ -45,12 +51,14 @@ if ~isempty(true_intx) && (flags.dyn_mod == 2)
     
     % True
     mod_true_intx = true_intx;
-    cpi = 1;
-    for kk = 1:K
-        if (cpi<length(true_tau))&&(times(kk)>true_tau(cpi+1))
-            cpi = cpi + 1;
+    if ~isempty(true_w)
+        cpi = 1;
+        for kk = 1:K
+            if (cpi<length(true_tau))&&(times(kk)>true_tau(cpi+1))
+                cpi = cpi + 1;
+            end
+            mod_true_intx(sd+1:2*sd, kk) = mod_true_intx(sd+1:2*sd, kk) + true_w(sd+1:2*sd,cpi);
         end
-        mod_true_intx(sd+1:2*sd, kk) = mod_true_intx(sd+1:2*sd, kk) + true_w(sd+1:2*sd,cpi);
     end
     
     error = abs(mod_true_intx - intx);

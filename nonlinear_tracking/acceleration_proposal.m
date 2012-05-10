@@ -28,7 +28,11 @@ w_mn = zeros(dr, 1);
 w_var = Q;
 
 % Work out where to start
-start_idx = find(min(times(times>tau))==times);
+if ~isempty(times(times>tau))
+    start_idx = find(min(times(times>tau))==times);
+else
+    start_idx = K+1;
+end
 
 % Work out which frames to use
 total_num_frames = K-start_idx+1;

@@ -1,4 +1,7 @@
 function [ new_x ] = next_state( flags, params, old_x, w, dt )
+
+% THIS IS THE OLD VERSION WHICH USES ROTATIONS.
+
 %NEXT_STATE Deterministically calculate the next state given the previous
 %state, the random variable, and the time difference using the various
 %dynamic models
@@ -54,86 +57,130 @@ else
     old_r = old_x(1:flags.space_dim,:);
     old_v = old_x(flags.space_dim+1:end,:);
     
-    % Calculate declination and magnitude of initial normal acceleration 
-    % (phi is angle between the vector and a vertical plane.)
-    if flags.space_dim == 3
-        [phi, aNc] = cart2pol(aN(1,:),aN(2,:));
-    elseif flags.space_dim == 2
-        aNc = aN; phi = pi/2;
-    end
-    
-    % Flags for where aT and aN are zero
-    tol = 1E-10;
-    waTz = (abs(aT)<tol);      % flag for where aT is 0
-    waNz = (abs(aNc)<tol);     % flag for where aN is 0
-    bnz = ((~waTz)&(~waNz));   % both not zero
-    oaTz = ((waTz)&(~waNz));   % only aT zero
-    oaNz = ((~waTz)&(waNz));   % only aN zero
-    bz = ((waTz)&(waNz));      % both zero
-    
-    % Inital speed
+    % Transform to planar intrinisics
     old_sdot = norm(old_v);
-    aT = max(aT, (min_speed-old_sdot)/dt(end));
     
-    % Unit vector matrixes
-    
-    % Tangential
-    et = unit(old_v,1);
-    et_rep = repmat(et,1,Ns);
-    
-    % Normal
-    if flags.space_dim == 3
+    if flags.space_dim == 2
+        % Calculate 2D bearing
+        old_psi = atan2(old_v(2), old_v(1));
+        aNc = aN(1,:);
+        
+    elseif flags.space_dim == 3
+        % Calculate declination and magnitude of normal acceleration (phi is
+        % angle between the vector and a vertical plane.)
+        [phi, aNc] = cart2pol(aN(1,:),aN(2,:));
+        
+        % Calculate unit vectors for 3D intrinsics at start of sojourn
+        et = unit(old_v,1);
+        et_rep = repmat(et,1,Ns);
         en = zeros(3,Ns); u = sqrt(et(1)^2+et(2)^2);
         en(1,:) =  (et(2)*sin(phi)-et(1)*et(3)*cos(phi))/u;
         en(2,:) = (-et(1)*sin(phi)-et(2)*et(3)*cos(phi))/u;
         en(3,:) = cos(phi)*u;
-    elseif flags.space_dim == 2
-        en = zeros(3,Ns);
-        en(1,:) = et(2);
-        en(2,:) = -et(1);
+        eb = cross(et_rep,en);
+        %     eb = zeros(3,Ns);
+        %     part1 = (et(1)^2+et(2)^2);
+        %     part2 = sqrt(cos(phi)^2-et(3)^2);
+        %     eb(1,:) = (-et(1)*et(3)*sin(phi)+et(2)*part2)/part1;
+        %     eb(2,:) = (-et(2)*et(3)*sin(phi)-et(1)*part2)/part1;
+        %     eb(3,:) = sin(phi);
+        %     en = cross(eb,et_rep);
+        if Ns == 1
+            R = [et, en, eb];
+        else
+            R = cat(3, et_rep', en', eb');
+        end
+        
+        old_psi = 0;
+        
     end
     
-    % Binormal
-    eb = cross(et_rep,en);
+    %%% Solve planar differential equation %%%
     
-    % Transitions
-    
-    % Speed
+    % speed
+    aT = max(aT, (min_speed-old_sdot)/dt(end));
     new_sdot = old_sdot + aT*dt;
     
-    % Angle
-    dpsi = zeros(1, no_cols);
-    if any(bnz)
-        dpsi(bnz&true(1,K)) = (aNc(bnz)./aT(bnz)).*log(new_sdot(bnz&true(1,K))./old_sdot);
-    end
-    if any(oaTz)
-        dpsi(oaTz&true(1,K)) = (aNc(oaTz).*dt)./old_sdot;
+    % bearing
+    if abs(aT)>1E-10
+        new_psi = old_psi + (aNc./aT).*log(new_sdot./old_sdot);
+    else
+        new_psi = old_psi + (aNc.*dt)./old_sdot;
     end
     
-    % Unit vectors
-    new_et =  bsxfun(@times, cos(dpsi), et_rep) + bsxfun(@times, sin(dpsi), en);
-    new_en = -bsxfun(@times, sin(dpsi), et_rep) + bsxfun(@times, cos(dpsi), en);
-    new_eb = eb;
+    % displacement
+    SF = 4*aT.^2 + aNc.^2;
     
-    % Convert back to cartesians
+    if Ns == 1
+        
+        new_u = zeros(flags.space_dim,no_cols);
+        if (aT~=0)&&(aNc~=0)
+            new_u(1,:) = ((new_sdot.^2)./SF).*( aNc.*sin(new_psi)+2*aT.*cos(new_psi)) - ((old_sdot^2)./SF)*( aNc.*sin(old_psi)+2*aT.*cos(old_psi));
+            new_u(2,:) = ((new_sdot.^2)./SF).*(-aNc.*cos(new_psi)+2*aT.*sin(new_psi)) - ((old_sdot^2)./SF)*(-aNc.*cos(old_psi)+2*aT.*sin(old_psi));
+        elseif (aT==0)&&(aNc~=0)
+            new_u(1,:) = ((new_sdot.^2)./aNc).*( sin(new_psi) - sin(old_psi) );
+            new_u(2,:) = ((new_sdot.^2)./aNc).*(-cos(new_psi) + cos(old_psi) );
+        elseif (aT~=0)&&(aNc==0)
+            new_u(1,:) = 0.5*dt.*cos(old_psi).*new_sdot;
+            new_u(2,:) = 0.5*dt.*sin(old_psi).*new_sdot;
+        else
+            new_u(1,:) = ( old_sdot*dt.*cos(old_psi) );
+            new_u(2,:) = ( old_sdot*dt.*sin(old_psi) );
+        end
+        
+    elseif Ns>1
+        
+        new_u = zeros(flags.space_dim,no_cols);
+        
+        % Flags for where aT and aN are zero
+        waTz = (aT==0);             % flag for where aT is 0
+        waNz = (aNc==0);             % flag for where aN is 0
+        bnz = ((~waTz)&(~waNz));   % both not zero
+        oaTz = ((waTz)&(~waNz));   % only aT zero
+        oaNz = ((~waTz)&(waNz));   % only aN zero
+        bz = ((waTz)&(waNz));      % both zero
+        
+        % Neither aT nor aN are zero
+        new_u(1,bnz) = ((new_sdot(bnz).^2)./SF(bnz)).*( aNc(bnz).*sin(new_psi(bnz))+2*aT(bnz).*cos(new_psi(bnz))) - ((old_sdot.^2)./SF(bnz)).*( aNc(bnz).*sin(old_psi)+2*aT(bnz).*cos(old_psi));
+        new_u(2,bnz) = ((new_sdot(bnz).^2)./SF(bnz)).*(-aNc(bnz).*cos(new_psi(bnz))+2*aT(bnz).*sin(new_psi(bnz))) - ((old_sdot.^2)./SF(bnz)).*(-aNc(bnz).*cos(old_psi)+2*aT(bnz).*sin(old_psi));
+        
+        % aT is zero but aN isn't
+        new_u(1,oaTz) = ((new_sdot(oaTz).^2)./aNc(oaTz)).*( sin(new_psi(oaTz)) - sin(old_psi) );
+        new_u(2,oaTz) = ((new_sdot(oaTz).^2)./aNc(oaTz)).*(-cos(new_psi(oaTz)) + cos(old_psi) );
+        
+        % aN is zero but aT isn't
+        new_u(1,oaNz) = 0.5*dt*cos(old_psi).*new_sdot(oaNz);
+        new_u(2,oaNz) = 0.5*dt*sin(old_psi).*new_sdot(oaNz);
+        
+        % Both aT and aN are zero
+        new_u(1,bz) = ( old_sdot*dt.*cos(old_psi) );
+        new_u(2,bz) = ( old_sdot*dt.*sin(old_psi) );
+        
+    end
     
-    % Velocity
-    new_v = bsxfun(@times, new_sdot, new_et);
+    % Calculate cartesian in-plane velocity
+    new_udot = zeros(flags.space_dim,no_cols);
+    [new_udot(1,:), new_udot(2,:)] = pol2cart(new_psi, new_sdot);
     
-    % Displacement
-    new_r = zeros(size(new_v));
-    interm1 = bsxfun(@times, new_sdot(~bz&true(1,K)).^2, 2*bsxfun(@times, aT(~bz), cos(dpsi(~bz&true(1,K)))) + bsxfun(@times, aNc(~bz), sin(dpsi(~bz&true(1,K))))) - 2*aT(~bz)*old_sdot^2;
-    interm2 = bsxfun(@times, new_sdot(~bz&true(1,K)).^2, 2*bsxfun(@times, aT(~bz), sin(dpsi(~bz&true(1,K)))) - bsxfun(@times, aNc(~bz), cos(dpsi(~bz&true(1,K))))) +  aNc(~bz)*old_sdot^2;
-    
-    new_r(:,~bz&true(1,K)) = bsxfun(@plus, bsxfun(@plus, old_r, aX(:,~bz)*dt), bsxfun(@times, ( 1 ./ ( aNc(~bz).^2+4*aT(~bz).^2 ) ), ...
-        bsxfun(@times, interm1, et_rep(:,~bz)) + ...
-        bsxfun(@times, interm2, en(:,~bz)) ) );
-    if any(bz)
-        new_r(:,bz&true(1,K)) = bsxfun(@plus, bsxfun(@plus, old_r, aX(:,bz)*dt), bsxfun(@times, new_v(:,bz&true(1,K)), dt) );
+    % Translate back to original coordinate system
+    if flags.space_dim == 2
+        new_r = bsxfun(@plus, new_u+aX*dt, old_r);
+        new_v = new_udot;
+    elseif flags.space_dim == 3
+        if Ns>1
+            %         new_r = multiprod(R, new_u', [2,3], 2)' + aX*dt +repmat(old_r,1,Ns);
+            %         new_v = multiprod(R, new_udot', [2,3], 2)';
+            R_perm = permute(R,[2 3 1]);
+            new_r = arraymatprod(R_perm, new_u) + aX*dt +repmat(old_r,1,Ns);
+            new_v = arraymatprod(R_perm, new_udot);
+        else
+            new_r = bsxfun(@plus, R*new_u + aX*dt, old_r);
+            new_v = R*new_udot;
+        end
     end
     
 end
-    
+
 % Stack them up
 new_x = [new_r; new_v];
 

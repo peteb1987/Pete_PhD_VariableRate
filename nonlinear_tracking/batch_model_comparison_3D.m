@@ -8,7 +8,7 @@ clup
 addpath('ekfukf/','arraylab/','lightspeed/');
 
 % How many random seed to try?
-num_seeds = 100;
+num_seeds = 5;
 
 % Get test flag
 % test_flag = str2double(getenv('SGE_TASK_ID'));
@@ -25,6 +25,8 @@ flags.obs_mod = 2;              % 1 = linear gaussian
 flags.resam_move = true;
 
 for r = 1:num_seeds;
+    
+    r
     
     %% Model 1, no velocities
     
@@ -46,8 +48,8 @@ for r = 1:num_seeds;
     % Filter
     [ filt_part_sets, filt_weight_sets ] = vr_filter( flags, params, times, observs );
     [~, parents] = systematic_resample(exp(filt_weight_sets{end}), params.Np); kita_pts = filt_part_sets{end}(parents);
-    [ filt_rmse, ~, ~] = filter_errors( flags, params, filt_part_sets, filt_weight_sets, times, true_tau, true_intx );
-    [ kita_mNs, ~, kita_rmse, ~, ~] = performance_measures( flags, params, kita_pts, times, true_tau, true_intx );
+    [ filt_rmse, ~, ~] = filter_errors( flags, params, filt_part_sets, filt_weight_sets, times, true_tau, true_w, true_intx );
+    [ kita_mNs, ~, kita_rmse, ~, ~] = performance_measures( flags, params, kita_pts, times, true_tau, true_w, true_intx );
 
     % Store
     results.M1withoutVel.filt_rmse(r) = filt_rmse;
@@ -155,8 +157,8 @@ for r = 1:num_seeds;
     % Filter
     [ filt_part_sets, filt_weight_sets ] = vr_filter( flags, params, times, observs );
     [~, parents] = systematic_resample(exp(filt_weight_sets{end}), params.Np); kita_pts = filt_part_sets{end}(parents);
-    [ filt_rmse, ~, ~] = filter_errors( flags, params, filt_part_sets, filt_weight_sets, times, true_tau, true_intx );
-    [ kita_mNs, ~, kita_rmse, ~, ~] = performance_measures( flags, params, kita_pts, times, true_tau, true_intx );
+    [ filt_rmse, ~, ~] = filter_errors( flags, params, filt_part_sets, filt_weight_sets, times, true_tau, true_w, true_intx );
+    [ kita_mNs, ~, kita_rmse, ~, ~] = performance_measures( flags, params, kita_pts, times, true_tau, true_w, true_intx );
     
     % Store
     results.M3withoutVel.filt_rmse(r) = filt_rmse;
@@ -165,4 +167,4 @@ for r = 1:num_seeds;
     
 end
 
-save('3Dmodel_comparison_results.mat', 'results');
+save('current_3Dmodel_comparison_results.mat', 'results');

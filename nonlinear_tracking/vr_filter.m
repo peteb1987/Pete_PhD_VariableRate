@@ -137,11 +137,11 @@ for k = 2:K
             weights(jj) = weights(jj) + pred_lhood;
             
             % If more than one non-jumping child, rejeuvenate with resample move.
-            if (ch>1)&&(pts(jj).Ns>1)
+            if (pts(jj).Ns>1)&&(ch>0) %(ch>1)
                 
                 % Run a RM step
                 if flags.resam_move
-                    pts(jj) = resample_move( flags, params, k, pts(jj), times, observs, 2 );
+                    pts(jj) = resample_move( flags, params, k, pts(jj), times, observs, 2+round(rand) );
                 end
                 
             end

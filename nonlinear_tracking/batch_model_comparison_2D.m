@@ -8,7 +8,7 @@ clup
 addpath('ekfukf/','arraylab/','lightspeed/');
 
 % How many random seed to try?
-num_seeds = 100;
+num_seeds = 10;
 
 % Get test flag
 % test_flag = str2double(getenv('SGE_TASK_ID'));
@@ -52,8 +52,8 @@ for r = 1:num_seeds;
     % Filter
     [ filt_part_sets, filt_weight_sets ] = vr_filter( flags, params, times, observs );
     [~, parents] = systematic_resample(exp(filt_weight_sets{end}), params.Np); kita_pts = filt_part_sets{end}(parents);
-    [ filt_rmse, ~, ~] = filter_errors( flags, params, filt_part_sets, filt_weight_sets, times, true_tau, true_intx );
-    [ kita_mNs, ~, kita_rmse, ~, ~] = performance_measures( flags, params, kita_pts, times, true_tau, true_intx );
+    [ filt_rmse, ~, ~] = filter_errors( flags, params, filt_part_sets, filt_weight_sets, times, true_tau, true_w, true_intx );
+    [ kita_mNs, ~, kita_rmse, ~, ~] = performance_measures( flags, params, kita_pts, times, true_tau, true_w, true_intx );
 
     % Store
     results.M1withoutVel.filt_rmse(r) = filt_rmse;
@@ -84,8 +84,8 @@ for r = 1:num_seeds;
     % Filter
     [ filt_part_sets, filt_weight_sets ] = vr_filter( flags, params, times, observs );
     [~, parents] = systematic_resample(exp(filt_weight_sets{end}), params.Np); kita_pts = filt_part_sets{end}(parents);
-    [ filt_rmse, ~, ~] = filter_errors( flags, params, filt_part_sets, filt_weight_sets, times, true_tau, true_intx );
-    [ kita_mNs, ~, kita_rmse, ~, ~] = performance_measures( flags, params, kita_pts, times, true_tau, true_intx );% 
+    [ filt_rmse, ~, ~] = filter_errors( flags, params, filt_part_sets, filt_weight_sets, times, true_tau, true_w, true_intx );
+    [ kita_mNs, ~, kita_rmse, ~, ~] = performance_measures( flags, params, kita_pts, times, true_tau, true_w, true_intx );% 
     % Store
     results.M1withVel.filt_rmse(r) = filt_rmse;
     results.M1withVel.kita_rmse(r) = kita_rmse;
@@ -115,8 +115,8 @@ for r = 1:num_seeds;
     % Filter
     [ filt_part_sets, filt_weight_sets ] = vr_filter( flags, params, times, observs );
     [~, parents] = systematic_resample(exp(filt_weight_sets{end}), params.Np); kita_pts = filt_part_sets{end}(parents);
-    [ ~, ~, filt_rmse] = filter_errors( flags, params, filt_part_sets, filt_weight_sets, times, true_tau, true_intx );
-    [ kita_mNs, ~, ~, ~, kita_rmse] = performance_measures( flags, params, kita_pts, times, true_tau, true_intx );% 
+    [ ~, ~, filt_rmse] = filter_errors( flags, params, filt_part_sets, filt_weight_sets, times, true_tau, true_w, true_intx );
+    [ kita_mNs, ~, ~, ~, kita_rmse] = performance_measures( flags, params, kita_pts, times, true_tau, true_w, true_intx );% 
     % Store
     results.M2withoutVel.filt_rmse(r) = filt_rmse;
     results.M2withoutVel.kita_rmse(r) = kita_rmse;
@@ -146,45 +146,13 @@ for r = 1:num_seeds;
     % Filter
     [ filt_part_sets, filt_weight_sets ] = vr_filter( flags, params, times, observs );
     [~, parents] = systematic_resample(exp(filt_weight_sets{end}), params.Np); kita_pts = filt_part_sets{end}(parents);
-    [ ~, ~, filt_rmse] = filter_errors( flags, params, filt_part_sets, filt_weight_sets, times, true_tau, true_intx );
-    [ kita_mNs, ~, ~, ~, kita_rmse] = performance_measures( flags, params, kita_pts, times, true_tau, true_intx );% 
+    [ ~, ~, filt_rmse] = filter_errors( flags, params, filt_part_sets, filt_weight_sets, times, true_tau, true_w, true_intx );
+    [ kita_mNs, ~, ~, ~, kita_rmse] = performance_measures( flags, params, kita_pts, times, true_tau, true_w, true_intx );% 
     % Store
     results.M2withVel.filt_rmse(r) = filt_rmse;
     results.M2withVel.kita_rmse(r) = kita_rmse;
     results.M2withVel.num_cps(r) = kita_mNs;
-
-%     %% Model 3, no velocities
-%     
-%     % Set random seed
-%     s = RandStream('mt19937ar', 'seed', r);
-%     RandStream.setDefaultStream(s);
-%     
-%     flags.dyn_mod = 3;
-%     flags.obs_vel = false;
-%     
-%     % Set parameters
-%     set_parameters_bench;
-%     
-%     [ params, times, observs, true_intx ] = load_benchmark(flags, params);
-%     true_tau = [];
-%     true_x = [];
-%     true_w = [];
-%     
-%     % Set random seed
-%     s = RandStream('mt19937ar', 'seed', r);
-%     RandStream.setDefaultStream(s);
-%     
-%     % Filter
-%     [ filt_part_sets, filt_weight_sets ] = vr_filter( flags, params, times, observs );
-%     [~, parents] = systematic_resample(exp(filt_weight_sets{end}), params.Np); kita_pts = filt_part_sets{end}(parents);
-%     [ filt_rmse, ~, ~] = filter_errors( flags, params, filt_part_sets, filt_weight_sets, times, true_tau, true_intx );
-%     [ kita_mNs, ~, kita_rmse, ~, ~] = performance_measures( flags, params, kita_pts, times, true_tau, true_intx );
-%     
-%     % Store
-%     results.M3withoutVel.filt_rmse(r) = filt_rmse;
-%     results.M3withoutVel.kita_rmse(r) = kita_rmse;
-%     results.M3withoutVel.num_cps(r) = kita_mNs;
     
 end
 
-save('test_model_comparison_results.mat', 'results');
+save('current_2Dmodel_comparison_results.mat', 'results', 'flags', 'params');

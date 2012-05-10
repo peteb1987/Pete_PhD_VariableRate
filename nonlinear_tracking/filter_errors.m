@@ -43,8 +43,10 @@ for k = 2:K
         
         % True
         mod_true_intx = true_intx(:,k);
-        cpi = find(true_tau==max(true_tau(true_tau<times_array(k))));
-        mod_true_intx(sd+1:2*sd) = mod_true_intx(sd+1:2*sd) + true_w(sd+1:2*sd,cpi);
+        if ~isempty(true_w)
+            cpi = find(true_tau==max(true_tau(true_tau<times_array(k))));
+            mod_true_intx(sd+1:2*sd) = mod_true_intx(sd+1:2*sd) + true_w(sd+1:2*sd,cpi);
+        end
         
         error = abs(mod_true_intx - intx(:,k));
         corr_rmse.pos_over_time(k) = sqrt( sum(error(1:sd,:).^2,1));

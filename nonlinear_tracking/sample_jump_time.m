@@ -18,8 +18,7 @@ if ~isempty(new_tau)
     prob = log(gampdf(new_tau-old_tau, params.rate_shape, params.rate_scale)) ...
           -log(1-gamcdf(no_jump_t-old_tau, params.rate_shape, params.rate_scale));
 else
-    prob = log(1-gamcdf(old_tau, params.rate_shape, params.rate_scale)) ...
-          -log(1-gamcdf(no_jump_t-old_tau, params.rate_shape, params.rate_scale));
+    prob = log(1-gamcdf(no_jump_t-old_tau, params.rate_shape, params.rate_scale));
 end
 
 end
