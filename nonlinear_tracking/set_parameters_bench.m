@@ -22,15 +22,15 @@ end
 %%% Model %%%
 
 % Accelerations
-aT = (10)^2;
+aT = (5)^2;
 aN = (50)^2;
-aX = (10)^2;
-aY = (10)^2;
-aZ = (10)^2;
+aX = (50)^2;
+aY = (50)^2;
+aZ = (50)^2;
 
 % Jump times
-params.rate_shape = 6;                  % State time gamma distribution shape parameter (this is "a", or "k")
-params.rate_scale = 4;                  % State time gamma distribution scale parameter (this is "b", or "theta")
+params.rate_shape = 4;%6;                  % State time gamma distribution shape parameter (this is "a", or "k")
+params.rate_scale = 20/3;%4;                  % State time gamma distribution scale parameter (this is "b", or "theta")
 
 % Observations
 range_var = (200)^2;
@@ -52,7 +52,8 @@ params.M = 1;
 params.ppsl_move_time_sd = ...          % Standard deviation for proposal distribution for moving jump times
     0.1*(params.rate_shape*params.rate_scale);
 params.min_num_ppsl_frames = 20;         % Minimum number of frames over which the UKF-approximated OID proposal is constructed
-params.prop_ppsl_frames = 0.1;          % Proportion of frames in a window used for acceleration proposal
+params.max_num_ppsl_frames = inf;
+params.prop_ppsl_frames = 1;          % Proportion of frames in a window used for acceleration proposal
 
 
 

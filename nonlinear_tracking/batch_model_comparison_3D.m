@@ -8,7 +8,7 @@ clup
 addpath('ekfukf/','arraylab/','lightspeed/');
 
 % How many random seed to try?
-num_seeds = 5;
+num_seeds = 10;
 
 % Get test flag
 % test_flag = str2double(getenv('SGE_TASK_ID'));
@@ -167,4 +167,4 @@ for r = 1:num_seeds;
     
 end
 
-save('current_3Dmodel_comparison_results.mat', 'results');
+save('current_3Dmodel_comparison_results.mat', 'results', 'flags', 'params');

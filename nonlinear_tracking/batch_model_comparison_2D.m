@@ -8,7 +8,7 @@ clup
 addpath('ekfukf/','arraylab/','lightspeed/');
 
 % How many random seed to try?
-num_seeds = 10;
+num_seeds = 100;
 
 % Get test flag
 % test_flag = str2double(getenv('SGE_TASK_ID'));

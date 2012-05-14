@@ -2,72 +2,56 @@ clup
 
 %% Problem
 
-load('M1withoutVelresults.mat')
+load('final_M1withoutVelresults.mat')
 plot_2D_benchmark_for_paper( flags, params, times, true_intx, observs, [] )
 
-wid = 4; hei = 3;
-format_graph_for_pdf;
-print(gcf, '-dpdf', ['benchmark_problem.pdf']);
+export_pdf(gcf, 'benchmark_problem.pdf', 4, 3, 'inches');
 
 %% M1 without
 
-load('M1withoutVelresults.mat')
+load('final_M1withoutVelresults.mat')
 plot_2D_benchmark_for_paper( flags, params, times, true_intx, [], pts )
 
-wid = 4; hei = 3;
-format_graph_for_pdf;
-print(gcf, '-dpdf', ['M1withoutVel.pdf']);
+export_pdf(gcf, 'M1withoutVel.pdf', 4, 3, 'inches');
 
 %% M1 with
 
-load('M1withVelresults.mat')
+load('final_M1withVelresults.mat')
 plot_2D_benchmark_for_paper( flags, params, times, true_intx, [], pts )
 
-wid = 4; hei = 3;
-format_graph_for_pdf;
-print(gcf, '-dpdf', ['M1withVel.pdf']);
+export_pdf(gcf, 'M1withVel.pdf', 4, 3, 'inches');
 
 %% M2 without
 
-load('M2withoutVelresults.mat')
+load('final_M2withoutVelresults.mat')
 plot_2D_benchmark_for_paper( flags, params, times, true_intx, [], pts )
 
-wid = 4; hei = 3;
-format_graph_for_pdf;
-print(gcf, '-dpdf', ['M2withoutVel.pdf']);
+export_pdf(gcf, 'M2withoutVel.pdf', 4, 3, 'inches');
 
 %% M2 with
 
-load('M2withVelresults.mat')
+load('final_M2withVelresults.mat')
 plot_2D_benchmark_for_paper( flags, params, times, true_intx, [], pts )
 
-wid = 4; hei = 3;
-format_graph_for_pdf;
-print(gcf, '-dpdf', ['M2withVel.pdf']);
+export_pdf(gcf, 'M2withVel.pdf', 4, 3, 'inches');
 
 %% 3D Problem
 
-load('3DCartesian.mat')
+load('3DCartesian_moreRM.mat')
 plot_3D_benchmark_for_paper( flags, params, times, true_intx, observs, [] )
 
-wid = 4; hei = 3;
-format_graph_for_pdf;
-print(gcf, '-dpdf', ['3Dbenchmark_problem.pdf']);
+export_pdf(gcf, '3Dbenchmark_problem.pdf', 4, 3, 'inches');
 
 %% 3D Cartesian
 
-load('3DCartesian.mat')
+load('3DCartesian_moreRM.mat')
 plot_3D_benchmark_for_paper( flags, params, times, true_intx, [], pts )
 
-wid = 4; hei = 3;
-format_graph_for_pdf;
-print(gcf, '-dpdf', ['3DCartesian.pdf']);
+export_pdf(gcf, '3DCartesian.pdf', 4, 3, 'inches');
 
 %% 3D Intrinsic
 
-load('3DIntrinsic.mat')
+load('3DIntrinsic_moreRM.mat')
 plot_3D_benchmark_for_paper( flags, params, times, true_intx, [], pts )
 
-wid = 4; hei = 3;
-format_graph_for_pdf;
-print(gcf, '-dpdf', ['3DIntrinsic.pdf']);
+export_pdf(gcf, '3DIntrinsic.pdf', 4, 3, 'inches');

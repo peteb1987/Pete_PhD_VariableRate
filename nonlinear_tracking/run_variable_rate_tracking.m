@@ -7,7 +7,7 @@ dbstop if error
 % dbstop if warning
 
 % DEFINE RANDOM SEED
-rand_seed = 7;
+rand_seed = 0;
 
 % Set random seed
 s = RandStream('mt19937ar', 'seed', rand_seed);
@@ -18,15 +18,15 @@ RandStream.setDefaultStream(s);
 flags.gen_data = false;          % true = generate data. false = load real data
 
 % Tracking model flags
-flags.space_dim = 2;            % 2 for 2D, 3 for 3D
-flags.dyn_mod = 2;              % 1 = tangential and normal accelarations only
+flags.space_dim = 3;            % 2 for 2D, 3 for 3D
+flags.dyn_mod = 3;              % 1 = tangential and normal accelarations only
                                 % 2 = plus linear velocities
                                 % 3 = Cartesian accelerations
 flags.obs_mod = 2;              % 1 = linear gaussian
                                 % 2 = radar with gaussian noise
 
 % Observed velocity?
-flags.obs_vel = true;           % true = observations of position and velocity. false = only position observations
+flags.obs_vel = false;           % true = observations of position and velocity. false = only position observations
 
 % Use resample-move?
 flags.resam_move = true;
@@ -73,12 +73,12 @@ RandStream.setDefaultStream(s);
 % Calculate jump time kernel density estimate
 [filt_kd_times, filt_jump_kdest] = jump_time_kernel_density(times(params.K), filt_part_sets{params.K});
 
-% Plot filtering results
-plot_results( flags, params, f1, true_x, true_tau, times, true_intx, observs, filt_part_sets{params.K}, filt_kd_times, filt_jump_kdest );
-
 % Resample final particles
 [~, parents] = systematic_resample(exp(filt_weight_sets{end}), params.Np);
 kita_pts = filt_part_sets{end}(parents);
+
+% Plot filtering results
+plot_results( flags, params, f1, true_x, true_tau, times, true_intx, observs, kita_pts, filt_kd_times, filt_jump_kdest );
 
 % Histogram number of states
 figure(3), hist([filt_part_sets{params.K}.Ns])

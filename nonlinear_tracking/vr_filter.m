@@ -141,7 +141,7 @@ for k = 2:K
                 
                 % Run a RM step
                 if flags.resam_move
-                    pts(jj) = resample_move( flags, params, k, pts(jj), times, observs, 2+round(rand) );
+                    pts(jj) = resample_move( flags, params, k, pts(jj), times, observs, 2+round(rand) ); %
                 end
                 
             end

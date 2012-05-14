@@ -38,6 +38,7 @@ end
 total_num_frames = K-start_idx+1;
 used_num_frames = min(params.min_num_ppsl_frames,total_num_frames);
 used_num_frames = used_num_frames + round((total_num_frames - used_num_frames)*params.prop_ppsl_frames);
+used_num_frames = min(used_num_frames, params.max_num_ppsl_frames);
 frame_list = round( (1:used_num_frames)*total_num_frames/used_num_frames ) + start_idx-1;
 
 % Loop through time
