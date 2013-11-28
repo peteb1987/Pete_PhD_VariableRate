@@ -1,4 +1,4 @@
-function [ part_sets, weight_sets ] = rb_vr_filter( flags, params, times, observ )
+function [ part_sets, weight_sets, filt_pts ] = rb_vr_filter( flags, params, times, observ )
 %VR_INFERENCE Run variable rate particle filter and smoother algorithms
 
 % params is a structure with all the model and algorithm parameters
@@ -28,6 +28,8 @@ assert(size(observ,2)==K);
 last_pts = pts;
 last_weights = weights;
 last_Np = Np;
+
+filt_pts = pts;
 
 % Store initial particles
 part_sets{1} = pts;
@@ -134,11 +136,20 @@ for k = 2:K
     weights = log(lin_weights/sum(lin_weights));
     
     % Store particle output
-    part_sets{k} = pts;
-    weight_sets{k} = weights;
+    if params.Np < 200
+        part_sets{k} = pts;
+        weight_sets{k} = weights;
+    end
     last_pts = pts;
     last_Np = Np;
     last_weights = weights;
+    
+    [~, parents] = systematic_resample(exp(weights), params.Np);
+    resamp_pts = pts(parents);
+    for ii = 1:params.Np
+    filt_pts(ii).intmu(:,k) = resamp_pts(ii).intmu(:,k);
+    filt_pts(ii).intP(:,:,k) = resamp_pts(ii).intP(:,:,k);
+    end
     
     % Output
     fprintf('*** Completed frame %d, at time %4.3f, using %d particles.\n', k, t, Np);
@@ -146,14 +157,8 @@ for k = 2:K
 end
 
 % Final frame resample
-Nchild = systematic_resample(lin_weights, Np);
-parent = zeros(Np,1); cnt=0;
-for ii = 1:Np
-    parent(cnt+1:cnt+Nchild(ii)) = ii;
-    cnt = cnt + Nchild(ii);
-end
-weight_sets{K} = log(ones(Np,1)/Np);
-part_sets{K} = part_sets{K}(parent);
+weight_sets{K} = log(ones(Np,1)/params.Np);
+part_sets{K} = resamp_pts;
 
 end
 

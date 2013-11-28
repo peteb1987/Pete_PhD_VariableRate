@@ -86,6 +86,8 @@ end
 % Model posterior
 if ~isempty(pts)
     
+    Np = length(pts);
+    
     true_model_post = zeros(params.K,1);
     for k = 1:params.K
         latest_ind = find(cp_tau==max(cp_tau(cp_tau <= times(k))));
@@ -96,13 +98,13 @@ if ~isempty(pts)
     
     model_post = zeros(params.K,1);
     for k = 1:params.K
-        for ii = 1:params.Np
+        for ii = 1:Np
             latest_ind = find((pts(ii).cp.tau)==max(pts(ii).cp.tau(pts(ii).cp.tau <= times(k))));
             if pts(ii).cp.m(latest_ind)==2
                 model_post(k) = model_post(k) + 1;
             end
         end
-        model_post(k) = model_post(k)/params.Np;
+        model_post(k) = model_post(k)/Np;
     end
     
     subplot(7,2,[13,14]), hold on

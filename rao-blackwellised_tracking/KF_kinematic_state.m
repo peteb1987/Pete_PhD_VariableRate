@@ -1,11 +1,15 @@
-function [ mu, P, lhood ] = KF_kinematic_state( flags, params, k, cp, mu, P, times, observs  )
+function [ mu, P, lhood, A, Q ] = KF_kinematic_state( flags, params, k, cp, mu, P, times, observs  )
 %KF_KINEMATIC_STATE Kalman filter the kinematic state given the nonlinear
 %parameters.
 
 Ns = cp.Ns;
-tau = cp.tau(Ns);
-m = cp.m(Ns);
-u = cp.u(Ns);
+
+% Find latest jump
+ji = find(max(cp.tau(cp.tau<times(k)))==cp.tau(cp.tau<times(k)));
+
+tau = cp.tau(ji);
+m = cp.m(ji);
+u = cp.u(ji);
 
 t = times(k);
 if k > 1

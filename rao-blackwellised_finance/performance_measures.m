@@ -25,8 +25,8 @@ end
 
 MAP_pt = pick_max_particle(params, pts, times, observs);
 
-% Find minimum OSPA estimate
-MOSPA_pt = pick_MOSPA_particle(params, pts);
+% % Find minimum OSPA estimate
+% MOSPA_pt = pick_MOSPA_particle(params, pts);
 
 % Calculate MAP estimate RMSE
 if ~isempty(true_intx)
@@ -38,11 +38,11 @@ if ~isempty(true_intx)
     MAP_rmse.trend = sqrt(mean(MAP_trend_error(:).^2));
 end
 
-% Calculate MAP OSPA between particle jump sequences and real sequence
-if ~isempty(true_tau)
-    MAP_ospa = OSPA(true_tau, MAP_pt.tau, 1, 0.01)
-    MOSPA_ospa = OSPA(true_tau, MOSPA_pt.tau, 1, 0.01)
-end
+% % Calculate MAP OSPA between particle jump sequences and real sequence
+% if ~isempty(true_tau)
+%     MAP_ospa = OSPA(true_tau, MAP_pt.tau, 1, 0.01)
+%     MOSPA_ospa = OSPA(true_tau, MOSPA_pt.tau, 1, 0.01)
+% end
 
 end
 

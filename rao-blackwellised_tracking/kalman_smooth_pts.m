@@ -21,7 +21,7 @@ for ii = 1:Np
         if (ji < size(pts(ii).cp.tau,2)) && (t > pts(ii).cp.tau(ji+1))
         
             [A, Q, ~] = construct_transmats(pts(ii).cp.tau(ji+1)-interm_t, pts(ii).cp.m(ji), pts(ii).cp.u(ji), params.proc_var);
-            interm_t = pts(ii).cp.tau(ji);
+            interm_t = pts(ii).cp.tau(ji+1);
             
             ji = ji + 1;
             [~, ~, Ajump] = construct_transmats(0, pts(ii).cp.m(ji), pts(ii).cp.u(ji), params.proc_var);
@@ -30,8 +30,8 @@ for ii = 1:Np
            
         else
             
-            A = eye(6);
-            Q = zeros(6);
+            A = eye(ds);
+            Q = zeros(ds);
             
         end
         

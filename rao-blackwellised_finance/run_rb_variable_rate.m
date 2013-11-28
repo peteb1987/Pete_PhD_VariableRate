@@ -44,10 +44,10 @@ fig = figure(1);
 plot_results(flags, params, times, observ, tau, type, interp_state, [], [], fig);
 
 %% Filtering
-
+tic
 % Call filtering algorithm
-[ filt_part_sets, filt_weight_sets ] = rb_vr_filter( flags, params, times, observ );
-
+[ filt_part_sets, filt_weight_sets, filt_pts ] = rb_vr_filter( flags, params, times, observ );
+toc
 % Calculate jump time kernel density estimate
 [filt_kd_est] = jump_kernel_est(length(filt_part_sets{params.K}), times(params.K), cat(2,filt_part_sets{params.K}.tau), cat(2,filt_part_sets{params.K}.type));
 
@@ -59,10 +59,10 @@ plot_results(flags, params, times, observ, tau, type, interp_state, filt_part_se
 figure(3), hist([filt_part_sets{params.K}.Ns])
 
 %% Smoothing
-
+tic
 % Call smoothing algorithm
 [ smooth_pts] = rb_vr_smoother( flags, params, times, observ, filt_part_sets, filt_weight_sets);
-
+toc
 % Calculate jump time kernel density estimate
 [smooth_kd_est] = jump_kernel_est(length(smooth_pts), times(params.K), cat(2,smooth_pts.tau), cat(2,smooth_pts.type));
 
@@ -76,7 +76,7 @@ figure(5), hist([smooth_pts.Ns])
 %% Kitigawa smoothing
 
 % Create an array of filtering particles
-[ filt_pts ] = create_filter_set( params.Np, filt_part_sets, filt_weight_sets );
+% [ filt_pts ] = create_filter_set( params.Np, filt_part_sets, filt_weight_sets );
 kiti_pts = kalman_smooth_pts(flags, params, times, filt_part_sets{end});
 
 % Plot Kitagawa results
@@ -114,9 +114,22 @@ if ~isempty(interp_state)
     figure(13), bar([filt_MAP_rmse.trend, kiti_MAP_rmse.trend, VRPS_MAP_rmse.trend]);
 end
 
+% ENEES
+if ~isempty(interp_state)
+    filt_ENEES = calc_filter_ENEES(flags, params, interp_state, filt_pts);
+    kita_ENEES = calc_smoother_ENEES(flags, params, interp_state, kiti_pts);
+    smooth_ENEES = calc_smoother_ENEES(flags, params, interp_state, smooth_pts);
+
+
+    figure(14), hold on
+    plot(times, filt_ENEES, 'r');
+    plot(times, kita_ENEES, 'b');
+    plot(times, smooth_ENEES, 'g');
+end
+
 % Unique particles
 kiti_UP = count_unique_particles(times, filt_part_sets{end});
 VRPS_UP = count_unique_particles(times, smooth_pts);
-figure(14), hold on
+figure(15), hold on
 plot(times, kiti_UP, 'g');
 plot(times, VRPS_UP, 'b');

@@ -12,7 +12,7 @@ addpath('ekfukf/','arraylab/','lightspeed/');
 test_flag = 1;
 
 % How many random seed to try?
-num_seeds = 10;
+num_seeds = 100;
 
 for r = 1:num_seeds;
     
@@ -34,32 +34,40 @@ for r = 1:num_seeds;
     RandStream.setDefaultStream(s);
     
     % Call filtering algorithm
-    [ filt_part_sets, filt_weight_sets ] = rb_vr_filter( flags, params, times, observ );
+    [ filt_part_sets, filt_weight_sets, filt_pts ] = rb_vr_filter( flags, params, times, observ );
     
     % Call smoothing algorithm
-    [ smooth_pts] = rb_vr_smoother( flags, params, times, observ, filt_part_sets, filt_weight_sets);
+%     [ smooth_pts] = rb_vr_smoother( flags, params, times, observ, filt_part_sets, filt_weight_sets);
     
     % Create an array of filtering particles
-    [ filt_pts ] = create_filter_set( params.Np, filt_part_sets, filt_weight_sets );
+%     [ filt_pts ] = create_filter_set( params.Np, filt_part_sets, filt_weight_sets );
     kita_pts = kalman_smooth_pts(flags, params, times, filt_part_sets{end});
     
     % Errors
     [filt.mNs, filt.mospa, filt.mean_rmse, filt.MAP_rmse ] = performance_measures(params, filt_pts, times, observ, tau, interp_state);
     [kita.mNs, kita.mospa, kita.mean_rmse, kita.MAP_rmse ] = performance_measures(params, kita_pts, times, observ, tau, interp_state);
-    [VRPS.mNs, VRPS.mospa, VRPS.mean_rmse, VRPS.MAP_rmse ] = performance_measures(params, smooth_pts, times, observ, tau, interp_state);
+%     [VRPS.mNs, VRPS.mospa, VRPS.mean_rmse, VRPS.MAP_rmse ] = performance_measures(params, smooth_pts, times, observ, tau, interp_state);
     
     % Unique particles
-    [kita.unique_over_time, kita.unique_sequences, kita.unique_times] = count_unique_particles(times, filt_part_sets{end});
-    [VRPS.unique_over_time, VRPS.unique_sequences, VRPS.unique_times] = count_unique_particles(times, smooth_pts);
+%     [kita.unique_over_time, kita.unique_sequences, kita.unique_times] = count_unique_particles(times, filt_part_sets{end});
+%     [VRPS.unique_over_time, VRPS.unique_sequences, VRPS.unique_times] = count_unique_particles(times, smooth_pts);
+    
+    % ENEES
+%     filt.ENEES = calc_filter_ENEES(flags, params, interp_state, filt_part_sets, filt_weight_sets);
+    filt.ENEES = calc_smoother_ENEES(flags, params, interp_state, filt_pts);
+    kita.ENEES = calc_smoother_ENEES(flags, params, interp_state, kita_pts);
+%     VRPS.ENEES = calc_smoother_ENEES(flags, params, interp_state, smooth_pts);
     
     % Store
     results.filt(r) = filt;
     results.kita(r) = kita;
-    results.VRPS(r) = VRPS;
+%     results.VRPS(r) = VRPS;
     
+    clear filt_part_sets filt_weight_sets
+
 end
 
 %% Save
 
-filename  = ['results_' num2str(test_flag) '.mat'];
-save(filename, 'results');
+filename  = ['test_results.mat'];
+save(filename, 'flags', 'params', 'results');

@@ -25,7 +25,7 @@ params.rate_scale = 1;                  % State time gamma distribution scale pa
 params.proc_var = 0.01;
 
 % Turn rate
-params.tr_var = 0.01;
+params.tr_var = 0.05;
 
 % Acceleration jump
 params.accel_var = 0.001;
