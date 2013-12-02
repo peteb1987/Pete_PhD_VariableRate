@@ -20,7 +20,7 @@ if speed < model.vmin
 end
 
 % Remaining update equations
-if aT > 0
+if aT ~= 0
     head = cp_head + (aN/aT)*log(speed/cp_speed);
 else
     head = cp_head + aN*(time - cp_time)/speed;

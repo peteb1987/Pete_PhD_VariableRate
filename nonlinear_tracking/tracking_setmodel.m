@@ -8,7 +8,7 @@ function model = tracking_setmodel(test)
 %%%%%%%%%%%%%%%%
 
 % General things
-model.K = 100;                  % Number of time points
+model.K = 50;                  % Number of time points
 model.ds = 4;                   % Dimension of the state
 model.do = 2;                   % Dimension of the observations
 model.dp = 2;
@@ -22,7 +22,7 @@ model.aN_vr = 1;
 
 % Changepoint period model
 model.period_trans_shape = 2;
-model.period_trans_scale = 9/2;
+model.period_trans_scale = 5/2;
 model.period_trans_shift = 1;
 
 % Changepoint parameter model
@@ -36,7 +36,7 @@ model.x0 = [-100; 50; 10; 0];
 model.vmin = 0.1;
 
 % Observation variances
-sigtheta = ( 2*(pi/180) )^2; % Bearing covariance (0.25/5)
+sigtheta = ( 1*(pi/180) )^2; % Bearing covariance (0.25/5)
 sigr     = 10;                 % Range covariance (0.1/100)
 
 % Observation covariance matrix

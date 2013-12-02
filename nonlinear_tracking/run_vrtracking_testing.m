@@ -14,10 +14,11 @@ if ~exist('test', 'var') || ~isfield(test,'flag_batch') || (~test.flag_batch)
     %%% SETTINGS %%%
     
     % DEFINE RANDOM SEED
-    rand_seed = 0;
+    rand_seed = 1;
     
     % Set display options
     display.text = true;
+    display.plot_before = false;
     display.plot_during = false;
     display.plot_after = true;
     
@@ -42,17 +43,27 @@ rng(rand_seed);
 
 %% Plot data
 
-[ox, oy] = pol2cart(observ(1,:), observ(2,:));
-figure, hold on
-plot(state(1,:), state(2,:), 'k--');
-plot(ox, oy, 'r.')
-plot(cp_state(1,:), cp_state(2,:), 'g*')
+if display.plot_before
+    [ox, oy] = pol2cart(observ(1,:), observ(2,:));
+    figure, hold on
+    plot(state(1,:), state(2,:), 'k--');
+    plot(ox, oy, 'r.')
+    plot(cp_state(1,:), cp_state(2,:), 'g*')
+end
 
 %% Filtering
 
 % Run the particle filter
 [pf, pf_diagnostics] = vr_particle_filter(display, algo, model, time, observ);
 
+%% Plotting
+
+if display.plot_after
+    
+    fig = tracking_plottrue(model, time, state, observ, cp_time, cp_param, cp_state);
+    tracking_plotparticles(algo, model, fig, model.K, time, pf);
+    
+end
 
 % %% Analysis
 % pos_rmse = cell(num_alg,1);
